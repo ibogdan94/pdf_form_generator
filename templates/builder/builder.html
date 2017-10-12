@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<style type="text/css">
+    #canvas {
+        border: 1px solid red;
+    }
+
+    #theText {
+        width: 10em;
+    }
+
+    body {
+        background-color: #eee;
+    }
+</style>
+<body>
+<div style="display: block">
+    <input id="newtext" type="text" value="Bogdan Ivanov">
+    <!--<input id="imgSource" placeholder="image source" type="text" value="">-->
+
+    <!--<input placeholder="font size" type="text" id="font_size" value="">-->
+    <!--<input placeholder="font color" type="text" id="font_color" value="">-->
+    <button id="addbutton">Add text</button>
+    <!--<button id="update_prop">Update Prop</button>-->
+    <!--<div id="container"></div>-->
+    <button id="save">Save</button>
+    <button id="delete">Delete Selected Element</button>
+</div>
+
+<div style="display: inline-flex;" class="controls">
+    <p>
+        <label><span>Angle:</span> <input type="range" id="angle-control" value="0" min="0" max="360"></label>
+    </p>
+    <p>
+        <label><span>Left:</span> <input type="range" id="left-control" value="150" min="0" max="300"></label>
+    </p>
+    <p>
+        <label><span>Top:</span> <input type="range" id="top-control" value="150" min="0" max="300"></label>
+    </p>
+    <p>
+        <label><span>Scale:</span> <input type="range" id="scale-control" value="1" min="0.1" max="3" step="0.1"></label>
+    </p>
+    <p>
+        <label><span>SkewX:</span> <input type="range" id="skewX-control" value="0" min="0" max="80" step="1"></label>
+    </p>
+    <p>
+        <label><span>SkewY:</span> <input type="range" id="skewY-control" value="0" min="0" max="80" step="1"></label>
+    </p>
+    <p>
+        <label><span>Char Spacing:</span> <input type="number" id="charSpacing-control" value="700" min="0" max="2000" step="10"></label>
+    </p>
+    <p>
+        <label><span>FontSize:</span> <input type="number" id="fontSize-control" min="0" value="21" step="1"></label>
+    </p>
+    <p>
+        <label><span>fontWeight:</span> <input type="number" id="fontWeight-control" step="50" value="900"></label>
+    </p>
+    <p>
+        <label><span>Color:</span> <input class="jscolor" id="color-control" value="000000"></label>
+    </p>
+</div>
+
+<!--{{range .images}}-->
+<!--<li>{{.}}</li>-->
+<!--{{end}}-->
+<canvas id="canvas" width="828" height="1170"></canvas>
+
+<script src="node_modules/fabric/dist/fabric.js"></script>
+<script src="static/js/pdf_builder.js"></script>
+
+</body>
+</html>
+
+

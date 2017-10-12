@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="node_modules/dropzone/dist/min/basic.min.css" />
+    <link rel="stylesheet" href="node_modules/dropzone/dist/min/dropzone.min.css" />
+    <style>
+        html, body {
+            margin:0;
+            padding:0;
+            height:100%;
+            font-family:arial,sans-serif;
+        }
+
+        #myDropzone {
+            border: 2px dashed #0087F7;
+            border-radius: 5px;
+            background: white;
+            height:50%;
+            margin: 50px;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+
+<form method="post" action="/pdf/upload" enctype="multipart/form-data">
+    <input name="pdf" type="file" />
+    <button type="submit">Upload</button>
+</form>
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/dropzone/dist/dropzone.js"></script>
+<script>
+//    var myDropzone = new Dropzone("#myDropzone", {
+//        dictDefaultMessage: "Select or drop pdf file for editing",
+//        maxFiles:1,
+//        url: "/file/post",
+//        init: function() {
+//            this.on("maxfilesexceeded", function(file) {
+//                this.removeAllFiles();
+//                this.addFile(file);
+//            });
+//        }
+//    });
+
+//    dropzoneOptions = {
+//        dictDefaultMessage: "Select or drop pdf file for editing",
+//        maxFiles:1,
+//        url: "/file/post",
+//        init: function() {
+//            this.on("maxfilesexceeded", function(file) {
+//                this.removeAllFiles();
+//                this.addFile(file);
+//            });
+//        }
+//    };
+//
+//    var myDropzone = document.querySelector('#myDropzone');
+//    var newDropzone = new Dropzone(myDropzone, dropzoneOptions);
+
+//$(function() {
+//    $("form#myDropzone").dropzone({
+//        dictDefaultMessage: "Select or drop pdf file for editing",
+//        maxFiles:1,
+//        url: "/file/post",
+//        init: function() {
+//            this.on("maxfilesexceeded", function(file) {
+//                this.removeAllFiles();
+//                this.addFile(file);
+//            });
+//        }
+//    });
+//});
+</script>
+</body>
+</html>
