@@ -4,9 +4,9 @@
     <meta charset="utf-8">
 </head>
 <style type="text/css">
-    #canvas {
-        border: 1px solid red;
-    }
+    /*#canvas {*/
+        /*border: 1px solid red;*/
+    /*}*/
 
     #theText {
         width: 10em;
@@ -14,6 +14,10 @@
 
     body {
         background-color: #eee;
+    }
+
+    canvas.active {
+        border: 1px solid red;
     }
 </style>
 <body>
@@ -63,13 +67,17 @@
     </p>
 </div>
 
-<!--{{range .images}}-->
-<!--<li>{{.}}</li>-->
-<!--{{end}}-->
-<canvas id="canvas" width="828" height="1170"></canvas>
+{{ range $key, $value := .images }}
+<!--<img src="{{ $value }}">-->
+<!--<h3>{{ $key }}</h3>-->
+<!--<p>{{ $value }}</p>-->
+<canvas data-src="{{ $value }}" id="canvas_{{ $key }}" width="828" height="1170"></canvas>
+{{ end }}
 
-<script src="node_modules/fabric/dist/fabric.js"></script>
-<script src="static/js/pdf_builder.js"></script>
+
+
+<script src="/node_modules/fabric/dist/fabric.js"></script>
+<script src="/static/js/pdf_builder.js"></script>
 
 </body>
 </html>
