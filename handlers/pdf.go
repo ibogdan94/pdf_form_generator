@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/sessions"
 	"bytes"
 	"image/png"
-	"log"
 	"encoding/base64"
 	unicommon "github.com/unidoc/unidoc/common"
 	"github.com/unidoc/unidoc/pdf/creator"
