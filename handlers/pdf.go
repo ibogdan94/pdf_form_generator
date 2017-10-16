@@ -1,4 +1,4 @@
-package handlres
+package handlers
 
 import (
 	"github.com/gin-gonic/gin"
@@ -99,6 +99,10 @@ func SavePDF(ctx *gin.Context) {
 
 	if err := ctx.BindJSON(&json); err != nil {
 		fmt.Println("Json error:", err)
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Cannot bind JSON",
+		})
 	}
 
 	var b64FromRequest string = json.B64
@@ -108,14 +112,20 @@ func SavePDF(ctx *gin.Context) {
 
 	if err != nil {
 		fmt.Println("Cannot decode b64. Error:", err)
-		panic(err)
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Cannot decode b64",
+		})
 	}
 
 	r := bytes.NewReader(unbased)
 	img, err := png.Decode(r)
 
 	if err != nil {
-		panic("Bad png")
+		fmt.Println("Bad png:", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad png",
+		})
 	}
 
 	folderForResult := "./temp/result"
@@ -123,7 +133,9 @@ func SavePDF(ctx *gin.Context) {
 	if stat, err := os.Stat(folderForResult); err != nil && stat.IsDir() == false {
 		if err := os.Mkdir(folderForResult, 0755); err != nil {
 			fmt.Println("Cannot Create Folder:", err)
-			log.Fatal(err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Something went wrong",
+			})
 		}
 	}
 
@@ -132,17 +144,27 @@ func SavePDF(ctx *gin.Context) {
 	targetPath := folderForResult + "/" + fileName + ".png"
 
 	f, err := os.Create(targetPath)
+
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("Error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
 	}
 
 	if err := png.Encode(f, img); err != nil {
 		f.Close()
-		log.Fatal(err)
+		fmt.Printf("Error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
 	}
 
 	if err := f.Close(); err != nil {
-		log.Fatal(err)
+		fmt.Printf("Error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
 	}
 
 	pdfPath := folderForResult + "/" + fileName + ".pdf"
@@ -159,7 +181,9 @@ func SavePDF(ctx *gin.Context) {
 	err = imagesToPdf(inputPaths, pdfPath)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
