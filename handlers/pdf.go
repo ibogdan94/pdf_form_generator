@@ -178,6 +178,7 @@ func SavePDF(ctx *gin.Context) {
 	inputPaths := []string{targetPath}
 
 	err = imagesToPdf(inputPaths, pdfPath)
+
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -252,42 +253,35 @@ func parsePDFToPng(file multipart.File, headers *multipart.FileHeader) (result [
 
 	numberOfPages := mw.GetNumberImages()
 
-	//fmt.Println("numberOfPages", numberOfPages)
-
 	if numberOfPages > 0 {
-		//fmt.Println("Create wait group")
 		wg := new(sync.WaitGroup)
 
 		for i := 0; i < int(numberOfPages); i++ {
 			page := fmt.Sprintf("%s[%d]", imageFilePathWithExtension, i)
 			output := fmt.Sprintf("%s/%s.%d.png", folderForPDF, utils.Random(), i)
-			//fmt.Println("------------------")
-			//fmt.Println(output)
-			//fmt.Println("------------------")
 			command := fmt.Sprintf("convert -verbose -trim -density %d -resize %s -depth %d -flatten %s %s", 400, "25%", 8, page, output)
 			fmt.Println(command)
 			wg.Add(1)
 			result = append(result, output[1:])
-			go exe_cmd(command, wg)
+			go pdfToImages(command, wg)
 		}
 
 		wg.Wait()
 	}
 
-	//fmt.Println("PNG RESULT")
-	//fmt.Println(result)
-
 	return result, err
 }
 
-func exe_cmd(cmd string, wg *sync.WaitGroup) {
+func pdfToImages(cmd string, wg *sync.WaitGroup) {
 	parts := strings.Fields(cmd)
-	args := parts[1:len(parts)]
+	args := parts[1:]
 	out, err := exec.Command(parts[0], args...).Output()
+
 	if err != nil {
 		fmt.Println("error occured")
 		fmt.Printf("%s", err)
 	}
+
 	fmt.Printf("%s", out)
 	wg.Done()
 }
