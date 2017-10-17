@@ -28,7 +28,6 @@ type B64 struct {
 }
 
 func ValidateUploadPDF(c *gin.Context) {
-	//file, headers, err := c.Request.FormFile("pdf")
 	file, headers, err := c.Request.FormFile("pdf")
 
 	if err != nil {
