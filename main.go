@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	handlers "./handlers"
 	"os"
 	"os/signal"
 	"log"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 	"github.com/jinzhu/gorm"
 	 _ "github.com/jinzhu/gorm/dialects/mysql"
+	handlers "./handlers"
+	"io"
 )
 
 const WEB_SERVER_PORT = ":8888"
@@ -30,8 +31,20 @@ func main() {
 
 	defer db.Close()
 
+	f, err := os.OpenFile("logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	defer f.Close()
+
+	gin.SetMode(gin.DebugMode)
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+
 	r := gin.Default()
 
+	r.Use(gin.Logger())
 	r.Use(DBConnectHandler(db))
 
 	r.Delims("{{", "}}")
