@@ -4,6 +4,7 @@
     <title>{{.title}}</title>
     <link rel="stylesheet" href="node_modules/dropzone/dist/min/basic.min.css" />
     <link rel="stylesheet" href="node_modules/dropzone/dist/min/dropzone.min.css" />
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         html, body {
             margin:0;
@@ -20,59 +21,445 @@
             margin: 50px;
             color: black;
         }
+
+        .dz-max-files-reached {
+            background-color: #222!important;
+        }
+
+        canvas {
+            border: 2px solid #eee;
+        }
+
+        #canvasArea {
+            overflow-y: scroll;
+            height: 900px;
+        }
+
+        #firstStep {
+            margin-bottom: 15px;
+        }
+
+        .dropzone {
+            min-height: 800px;
+            background-color: #eee;
+        }
+
+        .canvas-container {
+            margin: 20px;
+        }
+
+        #secondStep {
+            display: none;
+        }
     </style>
 </head>
 <body>
+<div class="container-fluid">
+    <div id="firstStep" class="row">
+        <div style="padding-left: 0; padding-right: 0" class="col-lg-12">
+            <form class="dropzone" id="my-awesome-dropzone"></form>
+        </div>
+    </div>
+    <div id="secondStep" class="row">
+            <div class="col-lg-6">
+                <div id="canvasArea"></div>
+            </div>
+            <div class="col-lg-6">
+                <div>
+                    <div class="form-group">
+                        <label for="page">Select Page</label>
+                        <select id="page" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newtext">Type text here</label>
+                        <input id="newtext" type="text" class="form-control" value="Bogdan Ivanov">
+                        <button class="btn btn-primary" id="addbutton">Add text</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="angle-control">Angle</label>
+                        <input type="range" id="angle-control" class="form-control" value="0" min="0" max="360">
+                    </div>
+                    <div class="form-group">
+                        <label for="left-control">Left</label>
+                        <input type="range" id="left-control" class="form-control" value="150" min="0" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="top-control">Top</label>
+                        <input type="range" id="top-control" class="form-control" value="150" min="0" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="scale-control">Scale</label>
+                        <input type="range" id="scale-control" class="form-control" value="1" min="0.1" max="3" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="skewX-control">SkewX</label>
+                        <input type="range" id="skewX-control" class="form-control" value="0" min="0" max="80" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="skewY-control">SkewY</label>
+                        <input type="range" id="skewY-control" class="form-control" value="0" min="0" max="80" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="charSpacing-control">Char Spacing</label>
+                        <input type="number" id="charSpacing-control" class="form-control" value="700" min="0" max="2000" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="fontSize-control">FontSize</label>
+                        <input type="number" id="fontSize-control" class="form-control" min="0" value="21" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="fontWeight-control">Font Weight</label>
+                        <input type="number" id="fontWeight-control" class="form-control" step="50" value="900">
+                    </div>
+                    <div class="form-group">
+                        <label for="color-control">Color</label>
+                        <input class="jscolor" id="color-control" value="000000">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-success" id="save">Save</button>
+                        <button class="btn btn-danger" id="delete">Delete Selected Element</button>
+                    </div>
+                </div>
 
 
-<form method="post" action="/pdf/upload" enctype="multipart/form-data">
-    <input name="pdf" type="file" />
-    <button type="submit">Upload</button>
-</form>
+                <!--<div id="controlCenter">-->
+                    <!--<div style="display: block">-->
+                        <!--<input id="newtext" type="text" class="form-control" value="Bogdan Ivanov">-->
+                        <!--&lt;!&ndash;<input id="imgSource" placeholder="image source" type="text" value="">&ndash;&gt;-->
+
+                        <!--&lt;!&ndash;<input placeholder="font size" type="text" id="font_size" value="">&ndash;&gt;-->
+                        <!--&lt;!&ndash;<input placeholder="font color" type="text" id="font_color" value="">&ndash;&gt;-->
+                        <!--<button id="addbutton">Add text</button>-->
+                        <!--&lt;!&ndash;<button id="update_prop">Update Prop</button>&ndash;&gt;-->
+                        <!--&lt;!&ndash;<div id="container"></div>&ndash;&gt;-->
+                        <!--<button id="save">Save</button>-->
+                        <!--<button id="delete">Delete Selected Element</button>-->
+                    <!--</div>-->
+
+                    <!--<div style="display: inline-flex;" class="controls">-->
+                        <!--<p>-->
+                            <!--<label><span>Angle:</span> <input type="range" id="angle-control" value="0" min="0" max="360"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>Left:</span> <input type="range" id="left-control" value="150" min="0" max="300"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>Top:</span> <input type="range" id="top-control" value="150" min="0" max="300"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>Scale:</span> <input type="range" id="scale-control" value="1" min="0.1" max="3" step="0.1"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>SkewX:</span> <input type="range" id="skewX-control" value="0" min="0" max="80" step="1"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>SkewY:</span> <input type="range" id="skewY-control" value="0" min="0" max="80" step="1"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>Char Spacing:</span> <input type="number" id="charSpacing-control" value="700" min="0" max="2000" step="10"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>FontSize:</span> <input type="number" id="fontSize-control" min="0" value="21" step="1"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>fontWeight:</span> <input type="number" id="fontWeight-control" step="50" value="900"></label>-->
+                        <!--</p>-->
+                        <!--<p>-->
+                            <!--<label><span>Color:</span> <input class="jscolor" id="color-control" value="000000"></label>-->
+                        <!--</p>-->
+                    <!--</div>-->
+                <!--</div>-->
+            </div>
+        </div>
+</div>
 
 <script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/dropzone/dist/dropzone.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/node_modules/fabric/dist/fabric.js"></script>
+<!--<script src="/static/js/pdf_builder.js"></script>-->
 <script>
-//    var myDropzone = new Dropzone("#myDropzone", {
-//        dictDefaultMessage: "Select or drop pdf file for editing",
-//        maxFiles:1,
-//        url: "/file/post",
-//        init: function() {
-//            this.on("maxfilesexceeded", function(file) {
-//                this.removeAllFiles();
-//                this.addFile(file);
-//            });
-//        }
-//    });
 
-//    dropzoneOptions = {
-//        dictDefaultMessage: "Select or drop pdf file for editing",
-//        maxFiles:1,
-//        url: "/file/post",
-//        init: function() {
-//            this.on("maxfilesexceeded", function(file) {
-//                this.removeAllFiles();
-//                this.addFile(file);
-//            });
-//        }
-//    };
-//
-//    var myDropzone = document.querySelector('#myDropzone');
-//    var newDropzone = new Dropzone(myDropzone, dropzoneOptions);
 
-//$(function() {
-//    $("form#myDropzone").dropzone({
-//        dictDefaultMessage: "Select or drop pdf file for editing",
-//        maxFiles:1,
-//        url: "/file/post",
-//        init: function() {
-//            this.on("maxfilesexceeded", function(file) {
-//                this.removeAllFiles();
-//                this.addFile(file);
-//            });
-//        }
-//    });
-//});
+
+    const pdfEditor = {
+        CANVAS_ELEMENTS: [],
+        CLICKED_ON_CANVAS: false,
+        CLICKED_ON_BEFORE: false,
+        init: function () {
+            this.initDropZone();
+            $("#addbutton").on("click", pdfEditor.addText);
+            $("#save").on("click", pdfEditor.savePdf);
+            $("#delete").on("click", pdfEditor.deleteElement);
+        },
+        initDropZone: function () {
+            Dropzone.options.myAwesomeDropzone = {
+                maxFiles: 1,
+                url: 'api/v1/pdf/upload',
+                addRemoveLinks: false,
+                acceptedFiles: ".pdf",
+                accept: function(file, done) {
+                    console.log("uploaded");
+                    done();
+                },
+                init: function() {
+                    this.on("maxfilesexceeded", function(file){
+                        console.log(file);
+                    });
+
+                    this.on('addedfile', function(file) {
+                        if (this.files.length > 1) {
+                            this.removeFile(this.files[0]);
+                        }
+                    });
+
+                    this.on("sending", function (file) {
+                        console.log('upload started', file);
+                        $('.meter').show();
+                    });
+
+                    // File upload Progress
+                    this.on("totaluploadprogress", function (progress) {
+                        console.log("progress ", progress);
+                        $('.roller').width(progress + '%');
+                    });
+
+                    this.on("queuecomplete", function (progress) {
+                        $('.meter').delay(999).slideUp(999);
+                    });
+
+                    this.on("success", function(file, responseText) {
+                        if (responseText.images.length > 0) {
+                            $(".dropzone").animate({"minHeight": 150});
+                            $("#secondStep").show();
+                            let $canvasArea = $('#canvasArea');
+                            $canvasArea.empty();
+                            let i = 0;
+                            let $pageSelect = $("#page");
+                            for(let image of responseText.images) {
+                                let id = `canvas_${i}`;
+                                let canvas = pdfEditor.createCanvasElement(id);
+                                $canvasArea.append(canvas);
+                                $pageSelect.append(`<option value="${i}">Page ${i}</option>`);
+                                pdfEditor.initPdfEditor(canvas, image, i);
+                                i++;
+                            }
+                        }
+                    });
+                }
+            };
+        },
+        createCanvasElement: function (id) {
+            this.canvas = document.createElement('canvas');
+            this.canvas.id = id;
+            this.canvas.width = 828;
+            this.canvas.height = 1100;
+            return this.canvas;
+        },
+        initPdfEditor: function (canvas, src, pageNumber) {
+            let CANVAS = new fabric.Canvas(canvas);
+            fabric.Object.prototype.transparentCorners = false;
+
+            CANVAS.setBackgroundImage(
+                src,
+                CANVAS.renderAll.bind(CANVAS),
+                {
+                    crossOrigin: 'anonymous'
+                }
+            );
+
+            pdfEditor.CANVAS_ELEMENTS.push({"page": pageNumber, "canvas": CANVAS, "src": src});
+
+            CANVAS.on('mouse:down', function (options) {
+                if (options.target === null) {
+                    if (!pdfEditor.CLICKED_ON_CANVAS) {
+                        pdfEditor.addTextByClick(CANVAS, options.e);
+                        pdfEditor.CLICKED_ON_BEFORE = true;
+                        pdfEditor.CLICKED_ON_CANVAS = true;
+                    } else {
+                        if (pdfEditor.CLICKED_ON_BEFORE) {
+                            pdfEditor.CLICKED_ON_CANVAS = false;
+                            pdfEditor.CLICKED_ON_BEFORE = false;
+                        }
+                    }
+                }
+            });
+
+            return CANVAS
+        },
+        getSelectedCanvas: function () {
+            const page = $('#page').val();
+            let resultCanvas = null;
+
+            if (pdfEditor.CANVAS_ELEMENTS.length > 0) {
+                for (let canvas of pdfEditor.CANVAS_ELEMENTS) {
+                    if (canvas.page == page) {
+                        resultCanvas = canvas;
+                        break;
+                    }
+                }
+            } else {
+                throw "No canvas element";
+            }
+
+            if (resultCanvas === null) {
+                throw "No canvas element. Upload File one more time";
+            }
+
+            return resultCanvas;
+        },
+        addText: function (e) {
+            let $newText = $('#newtext');
+            let text = new fabric.Text($newText.val(), {
+                fontSize: parseInt($('#fontSize-control').val(), 10),
+                fontWeight: parseInt($('#fontWeight-control').val(), 10),
+                charSpacing: parseInt($('#charSpacing-control').val(), 10),
+            });
+
+            text.setColor('#' + $('#color-control').val());
+
+            let canvasData = pdfEditor.getSelectedCanvas();
+            let CANVAS = canvasData.canvas;
+
+            CANVAS.add(text);
+            pdfEditor.canvasListener(CANVAS, text);
+        },
+        addTextByClick: function (canvas, e) {
+            const text = new fabric.IText('...', {
+                fontSize: parseInt($('#fontSize-control').val(), 10),
+                fontWeight: parseInt($('#fontWeight-control').val(), 10),
+                charSpacing: parseInt($('#charSpacing-control').val(), 10),
+                top:e.offsetY,
+                cursorDuration:500,
+                left:e.offsetX,
+            });
+
+            canvas.add(text);
+        },
+        canvasListener: function (CANVAS, elem) {
+            const $angleControl = $('#angle-control');
+            $angleControl.on("input", function () {
+                elem.set('angle', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $scaleControl = $('#scale-control');
+            $scaleControl.on("input", function () {
+                elem.scale(parseFloat(this.value)).setCoords();
+                $fontSizeControl.val((elem.fontSize * elem.scaleX).toFixed(0));
+                CANVAS.renderAll();
+            });
+
+            const $topControl = $('#top-control');
+            $topControl.on("input", function () {
+                elem.set('top', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $leftControl = $('#left-control');
+            $leftControl.on("input", function () {
+                elem.set('left', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $skewXControl = $('#skewX-control');
+            $skewXControl.on("input", function () {
+                elem.set('skewX', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $skewYControl = $('#skewY-control');
+            $skewYControl.on("input", function () {
+                elem.set('skewY', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $charSpacingControl = $('#charSpacing-control');
+            $charSpacingControl.on("input", function () {
+                elem.set('charSpacing', parseInt(this.value, 10)).setCoords();
+                CANVAS.renderAll();
+            });
+
+            const $fontSizeControl = $('#fontSize-control');
+            $fontSizeControl.on("change", function () {
+                elem.set('fontSize', parseFloat(this.value));
+                CANVAS.renderAll();
+            });
+
+            const $colorControl = $('#color-control');
+            $colorControl.on("change", function () {
+                elem.set('fill', '#' + this.value);
+                CANVAS.renderAll();
+            });
+
+            const $fontWeightControl = $('#fontWeight-control');
+            $fontWeightControl.on("change", function () {
+                elem.set('fontWeight', parseInt(this.value, 10));
+                CANVAS.renderAll();
+            });
+
+            function updateControls() {
+                $scaleControl.val(elem.scaleX);
+                $angleControl.val(elem.angle);
+                $leftControl.val(elem.left);
+                $topControl.val(elem.top);
+                $skewXControl.val(elem.skewX);
+                $skewYControl.val(elem.skewY);
+                $charSpacingControl.val(elem.charSpacing);
+                $colorControl.val(elem.fill.substring(1));
+                $fontSizeControl.val(elem.fontSize);
+                $fontWeightControl.val(elem.fontWeight);
+            }
+
+            CANVAS.on({
+                'object:moving': updateControls,
+                'object:scaling': updateControls,
+                'object:resizing': updateControls,
+                'object:rotating': updateControls,
+                'object:skewing': updateControls,
+                'object:modified': updateControls
+            });
+        },
+        deleteElement: function () {
+            let canvasData = pdfEditor.getSelectedCanvas();
+            let CANVAS = canvasData.canvas;
+
+            const activeObject = CANVAS.getActiveObject(),
+                activeGroup = CANVAS.getActiveGroup();
+
+            if (activeObject) {
+                if (confirm('Are you sure?')) {
+                    CANVAS.remove(activeObject);
+                }
+            } else if (activeGroup) {
+                if (confirm('Are you sure?')) {
+                    const objectsInGroup = activeGroup.getObjects();
+                    CANVAS.discardActiveGroup();
+                    objectsInGroup.forEach(function(object) {
+                        CANVAS.remove(object);
+                    });
+                }
+            }
+        },
+        savePdf: function () {
+            let results = [];
+            for (let page of pdfEditor.CANVAS_ELEMENTS) {
+                results.push({"page": 1, "b64": page.canvas.toDataURL()});
+            }
+
+            $.ajax({
+                "method": "POST",
+                "url": "/api/v1/pdf/save",
+                "data": JSON.stringify(results)
+            }).done(function (result) {
+
+            }).fail(function () {
+
+            });
+        }
+    };
+
+    pdfEditor.init();
 </script>
 </body>
 </html>

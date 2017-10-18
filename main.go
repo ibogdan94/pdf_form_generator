@@ -8,44 +8,42 @@ import (
 	"context"
 	"time"
 	"net/http"
-	"github.com/jinzhu/gorm"
 	 _ "github.com/jinzhu/gorm/dialects/mysql"
 	handlers "./handlers"
-	"io"
 )
 
 const WEB_SERVER_PORT = ":8888"
 
-func DBConnectHandler(db *gorm.DB) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.Set("DB", db)
-	}
-}
+//func DBConnectHandler(db *gorm.DB) gin.HandlerFunc {
+//	return func(ctx *gin.Context) {
+//		ctx.Set("DB", db)
+//	}
+//}
 
 func main() {
-	db, err := gorm.Open("mysql", "ddidev:ddipass@tcp(127.0.0.1:3307)/akela?charset=utf8&parseTime=True&loc=Local")
-
-	if err != nil {
-		log.Print(err)
-	}
-
-	defer db.Close()
-
-	f, err := os.OpenFile("logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-
-	defer f.Close()
-
-	gin.SetMode(gin.DebugMode)
-	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+	//db, err := gorm.Open("mysql", "ddidev:ddipass@tcp(127.0.0.1:3307)/akela?charset=utf8&parseTime=True&loc=Local")
+	//
+	//if err != nil {
+	//	log.Print(err)
+	//}
+	//
+	//defer db.Close()
+	//
+	//f, err := os.OpenFile("logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	//
+	//if err != nil {
+	//	log.Fatalf("error opening file: %v", err)
+	//}
+	//
+	//defer f.Close()
+	//
+	//gin.SetMode(gin.DebugMode)
+	//gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
 	r := gin.Default()
 
 	r.Use(gin.Logger())
-	r.Use(DBConnectHandler(db))
+	//r.Use(DBConnectHandler(db))
 
 	r.Delims("{{", "}}")
 	r.LoadHTMLFiles("./templates/home/home.html", "./templates/builder/builder.html")
@@ -54,9 +52,8 @@ func main() {
 	r.Static("/temp", "./temp")
 
 	r.GET("/", handlers.HomeHandler)
-	r.POST("/pdf/upload", handlers.ValidateUploadPDF)
-	r.GET("/pdf/edit", handlers.EditParsedPDF)
-	r.POST("/pdf/save", handlers.SavePDF)
+	r.POST("/api/v1/pdf/upload", handlers.ValidateUploadPDF)
+	r.POST("/api/v1/pdf/save", handlers.SavePDF)
 
 	srv := &http.Server{
 		Addr: WEB_SERVER_PORT,
