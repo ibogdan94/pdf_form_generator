@@ -14,8 +14,9 @@ import (
 
 var store = sessions.NewCookieStore([]byte("something-very-secret"))
 
-type B64 struct {
-	B64 string `form:"b64" json:"b64" binding:"required"`
+type PngPage struct {
+	B64 string `json:"b64" binding:"required"`
+	Page int `json:"page" binding:"required"`
 }
 
 func ValidateUploadPDF(c *gin.Context) {
@@ -57,7 +58,7 @@ func ValidateUploadPDF(c *gin.Context) {
 }
 
 func SavePDF(ctx *gin.Context) {
-	var json B64
+	var json []PngPage
 
 	if err := ctx.BindJSON(&json); err != nil {
 		fmt.Println("Json error:", err)
@@ -67,73 +68,77 @@ func SavePDF(ctx *gin.Context) {
 		})
 	}
 
-	var b64FromRequest string = json.B64
-	//remove extra js headers
-	var b64 string = b64FromRequest[22:]
+	prefixName := utils.Random()
+	folderForResult := "./temp/result/" + prefixName
 
-	unBased, err := base64.StdEncoding.DecodeString(b64)
-
-	if err != nil {
-		fmt.Println("Cannot decode b64. Error:", err)
-
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Cannot decode b64",
+	if err := os.Mkdir(folderForResult, 0755); err != nil {
+		fmt.Println("Cannot Create Folder:", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
 		})
 	}
 
-	r := bytes.NewReader(unBased)
-	img, err := png.Decode(r)
+	//array of generated png from request
+	var inputPaths []string
 
-	if err != nil {
-		fmt.Println("Bad png:", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad png",
-		})
-	}
+	for _, pngPage := range json {
+		var b64FromRequest string = pngPage.B64
+		//remove extra js headers
+		var b64 string = b64FromRequest[22:]
 
-	folderForResult := "./temp/result"
+		unBased, err := base64.StdEncoding.DecodeString(b64)
 
-	if stat, err := os.Stat(folderForResult); err != nil && stat.IsDir() == false {
-		if err := os.Mkdir(folderForResult, 0755); err != nil {
-			fmt.Println("Cannot Create Folder:", err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Something went wrong",
-			})
+		if err != nil {
+			fmt.Println("Cannot decode b64. Error:", err)
+			//ctx.JSON(http.StatusBadRequest, gin.H{
+			//	"message": "Cannot decode b64",
+			//})
 		}
+
+		r := bytes.NewReader(unBased)
+		img, err := png.Decode(r)
+
+		if err != nil {
+			fmt.Println("Bad png:", err)
+			//ctx.JSON(http.StatusBadRequest, gin.H{
+			//	"message": "Bad png",
+			//})
+		}
+
+		targetPath := fmt.Sprintf("%s/%s[%d].png", folderForResult, prefixName, pngPage.Page)
+
+		fmt.Println(targetPath)
+
+		f, err := os.Create(targetPath)
+
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			//ctx.JSON(http.StatusInternalServerError, gin.H{
+			//	"message": "Something went wrong",
+			//})
+		}
+
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			fmt.Printf("Error: %v\n", err)
+			//ctx.JSON(http.StatusInternalServerError, gin.H{
+			//	"message": "Something went wrong",
+			//})
+		}
+
+		if err := f.Close(); err != nil {
+			fmt.Printf("Error: %v\n", err)
+			//ctx.JSON(http.StatusInternalServerError, gin.H{
+			//	"message": "Something went wrong",
+			//})
+		}
+
+		inputPaths = append(inputPaths, targetPath)
 	}
 
-	fileName := utils.Random()
-	targetPath := folderForResult + "/" + fileName + ".png"
+	pdfPath := fmt.Sprintf("%s/%s.pdf", folderForResult, prefixName)
 
-	f, err := os.Create(targetPath)
-
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Something went wrong",
-		})
-	}
-
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		fmt.Printf("Error: %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Something went wrong",
-		})
-	}
-
-	if err := f.Close(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Something went wrong",
-		})
-	}
-
-	pdfPath := folderForResult + "/" + fileName + ".pdf"
-
-	inputPaths := []string{targetPath}
-
-	err = utils.ImagesToPdf(inputPaths, pdfPath)
+	err := utils.ImagesToPdf(inputPaths, pdfPath)
 
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -143,6 +148,7 @@ func SavePDF(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"url": pdfPath[1:],
+		"pdf": pdfPath[1:],
+		"images": inputPaths,
 	})
 }

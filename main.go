@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 	"os"
 	"os/signal"
 	"log"
@@ -12,7 +13,7 @@ import (
 	handlers "./handlers"
 )
 
-const WEB_SERVER_PORT = ":8888"
+const WEB_SERVER_PORT = ":8443"
 
 //func DBConnectHandler(db *gorm.DB) gin.HandlerFunc {
 //	return func(ctx *gin.Context) {
@@ -42,11 +43,22 @@ func main() {
 
 	r := gin.Default()
 
+	//gin.SetMode(gin.ReleaseMode)
+
 	r.Use(gin.Logger())
 	//r.Use(DBConnectHandler(db))
 
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AddAllowHeaders("X-Requested-With", "Access-Control-Allow-Headers", "Cache-Control")
+
+	//
+	//r.Use(cors.New(config))
+
+	r.Use(cors.New(config))
+
 	r.Delims("{{", "}}")
-	r.LoadHTMLFiles("./templates/home/home.html", "./templates/builder/builder.html")
+	r.LoadHTMLFiles("./templates/home.html")
 	r.Static("/static", "./static")
 	r.Static("/node_modules", "./node_modules")
 	r.Static("/temp", "./temp")
@@ -61,7 +73,7 @@ func main() {
 	}
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
 			log.Printf("listen: %s\n", err)
 		}
 	}()
