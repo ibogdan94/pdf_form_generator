@@ -2,17 +2,15 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/location"
 	"net/http"
 	"fmt"
 	utils "../utils"
 	"os"
-	"github.com/gorilla/sessions"
 	"bytes"
 	"image/png"
 	"encoding/base64"
 )
-
-var store = sessions.NewCookieStore([]byte("something-very-secret"))
 
 type PngPage struct {
 	B64 string `json:"b64" binding:"required"`
@@ -38,7 +36,9 @@ func ValidateUploadPDF(c *gin.Context) {
 
 	defer file.Close()
 
-	result, err := utils.ParsePdfToPng(file, headers)
+	url := location.Get(c)
+
+	result, err := utils.ParsePdfToPng(url, file, headers)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -80,6 +80,10 @@ func SavePDF(ctx *gin.Context) {
 
 	//array of generated png from request
 	var inputPaths []string
+
+	url := location.Get(ctx)
+
+	schemaAndHost := url.Scheme + "://" + url.Host
 
 	for _, pngPage := range json {
 		var b64FromRequest string = pngPage.B64
@@ -147,8 +151,12 @@ func SavePDF(ctx *gin.Context) {
 		})
 	}
 
+	for i, image := range inputPaths {
+		inputPaths[i] = schemaAndHost + image[1:]
+	}
+
 	ctx.JSON(http.StatusCreated, gin.H{
-		"pdf": pdfPath[1:],
+		"pdf": schemaAndHost + pdfPath[1:],
 		"images": inputPaths,
 	})
 }

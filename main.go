@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/location"
 	"os"
 	"os/signal"
 	"log"
@@ -46,6 +47,7 @@ func main() {
 	//gin.SetMode(gin.ReleaseMode)
 
 	r.Use(gin.Logger())
+	r.Use(location.Default())
 	//r.Use(DBConnectHandler(db))
 
 	config := cors.DefaultConfig()

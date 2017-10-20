@@ -12,9 +12,10 @@ import (
 	"github.com/unidoc/unidoc/pdf/creator"
 	"log"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"net/url"
 )
 
-func ParsePdfToPng(file multipart.File, headers *multipart.FileHeader) (result []string, error error) {
+func ParsePdfToPng(url *url.URL, file multipart.File, headers *multipart.FileHeader) (result []string, error error) {
 	randomFileName := Random()
 	folderForPDF := "./temp/" + randomFileName
 
@@ -48,6 +49,8 @@ func ParsePdfToPng(file multipart.File, headers *multipart.FileHeader) (result [
 
 	numberOfPages := mw.GetNumberImages()
 
+	schemaAndHost := url.Scheme + "://" + url.Host
+
 	if numberOfPages > 0 {
 		wg := new(sync.WaitGroup)
 
@@ -57,7 +60,7 @@ func ParsePdfToPng(file multipart.File, headers *multipart.FileHeader) (result [
 			command := fmt.Sprintf("convert -verbose -trim -density %d -resize %s -depth %d -flatten %s %s", 400, "25%", 8, page, output)
 			fmt.Println(command)
 			wg.Add(1)
-			result = append(result, output[1:])
+			result = append(result, schemaAndHost + output[1:])
 
 			go pdfToImagesCommand(command, wg)
 		}
