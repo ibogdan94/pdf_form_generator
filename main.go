@@ -54,9 +54,6 @@ func main() {
 	config.AllowAllOrigins = true
 	config.AddAllowHeaders("X-Requested-With", "Access-Control-Allow-Headers", "Cache-Control")
 
-	//
-	//r.Use(cors.New(config))
-
 	r.Use(cors.New(config))
 
 	r.Delims("{{", "}}")
