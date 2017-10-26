@@ -17,7 +17,14 @@ import (
 
 func ParsePdfToPng(url *url.URL, file multipart.File, headers *multipart.FileHeader) (result []string, error error) {
 	randomFileName := Random()
-	folderForPDF := "./temp/" + randomFileName
+
+	props, err := ParseJSONConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	folderForPDF := props.TempPath + randomFileName
 
 	if err := os.Mkdir(folderForPDF, 0755); err != nil {
 		fmt.Println("Cannot Create Folder:", err)

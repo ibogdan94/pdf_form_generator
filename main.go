@@ -10,8 +10,8 @@ import (
 	"context"
 	"time"
 	"net/http"
-	 _ "github.com/jinzhu/gorm/dialects/mysql"
-	handlers "./handlers"
+	"pdf_form_generator/handlers"
+	"pdf_form_generator/utils"
 )
 
 const WEB_SERVER_PORT = ":8443"
@@ -42,6 +42,13 @@ func main() {
 	//gin.SetMode(gin.DebugMode)
 	//gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
+	props, err := utils.ParseJSONConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
 	r := gin.Default()
 
 	//gin.SetMode(gin.ReleaseMode)
@@ -67,16 +74,21 @@ func main() {
 	r.POST("/api/v1/pdf/save", handlers.SavePDF)
 
 	srv := &http.Server{
-		Addr: WEB_SERVER_PORT,
+		Addr: props.Port,
 		Handler: r,
 	}
 
+	//go func() {
+	//	if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
+	//		log.Printf("listen: %s\n", err)
+	//	}
+	//}()
+
 	go func() {
-		if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			log.Printf("listen: %s\n", err)
 		}
 	}()
-
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)

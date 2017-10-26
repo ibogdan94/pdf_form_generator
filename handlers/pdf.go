@@ -5,7 +5,7 @@ import (
 	"github.com/gin-contrib/location"
 	"net/http"
 	"fmt"
-	utils "../utils"
+	"pdf_form_generator/utils"
 	"os"
 	"bytes"
 	"image/png"

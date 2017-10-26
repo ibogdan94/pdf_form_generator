@@ -1,0 +1,6 @@
+{
+  "Port": ":5555",
+  "StaticPath": "./static",
+  "NodeModulesPath": "./node_modules",
+  "TempPath": "./temp"
+}
