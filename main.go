@@ -78,17 +78,17 @@ func main() {
 		Handler: r,
 	}
 
-	//go func() {
-	//	if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
-	//		log.Printf("listen: %s\n", err)
-	//	}
-	//}()
-
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
 			log.Printf("listen: %s\n", err)
 		}
 	}()
+
+	//go func() {
+	//	if err := srv.ListenAndServe(); err != nil {
+	//		log.Printf("listen: %s\n", err)
+	//	}
+	//}()
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
