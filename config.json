@@ -1,6 +1,6 @@
 {
   "Port": ":8443",
-  "StaticPath": "./static",
-  "NodeModulesPath": "./node_modules",
-  "TempPath": "./temp/"
+  "StaticPath": "static",
+  "NodeModulesPath": "node_modules",
+  "TempPath": "temp"
 }

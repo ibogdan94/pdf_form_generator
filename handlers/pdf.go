@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"image/png"
 	"encoding/base64"
+	"log"
 )
 
 type PngPage struct {
@@ -68,8 +69,40 @@ func SavePDF(ctx *gin.Context) {
 		})
 	}
 
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
+	}
+
+	props, err := utils.ParseJSONConfig()
+
+	if err != nil {
+		log.Fatal(err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Config error",
+		})
+	}
+
 	prefixName := utils.Random()
-	folderForResult := "./temp/result/" + prefixName
+
+	resultFolder := pwd + "/" + props.TempPath + "/result"
+
+	if _, err := os.Stat(resultFolder); os.IsNotExist(err) {
+		if err := os.Mkdir(resultFolder, 0755); err != nil {
+			fmt.Println("Cannot Create Folder:", resultFolder, err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Something went wrong",
+			})
+		}
+	}
+
+	folderForResult := resultFolder + "/" + prefixName
+	relativeFolder := props.TempPath + "/result/" + prefixName
 
 	if err := os.Mkdir(folderForResult, 0755); err != nil {
 		fmt.Println("Cannot Create Folder:", err)
@@ -111,8 +144,6 @@ func SavePDF(ctx *gin.Context) {
 
 		targetPath := fmt.Sprintf("%s/%s[%d].png", folderForResult, prefixName, pngPage.Page)
 
-		fmt.Println(targetPath)
-
 		f, err := os.Create(targetPath)
 
 		if err != nil {
@@ -137,12 +168,14 @@ func SavePDF(ctx *gin.Context) {
 			//})
 		}
 
-		inputPaths = append(inputPaths, targetPath)
+		relativePath := fmt.Sprintf("%s/%s[%d].png", relativeFolder, prefixName, pngPage.Page)
+
+		inputPaths = append(inputPaths, relativePath)
 	}
 
 	pdfPath := fmt.Sprintf("%s/%s.pdf", folderForResult, prefixName)
 
-	err := utils.ImagesToPdf(inputPaths, pdfPath)
+	err = utils.ImagesToPdf(inputPaths, pdfPath)
 
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -151,12 +184,14 @@ func SavePDF(ctx *gin.Context) {
 		})
 	}
 
+	pdfRelativePath := fmt.Sprintf("%s/%s/%s.pdf", schemaAndHost, relativeFolder, prefixName)
+
 	for i, image := range inputPaths {
-		inputPaths[i] = schemaAndHost + image[1:]
+		inputPaths[i] = schemaAndHost + "/" + image
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"pdf": schemaAndHost + pdfPath[1:],
+		"pdf": pdfRelativePath,
 		"images": inputPaths,
 	})
 }

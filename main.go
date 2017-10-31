@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"pdf_form_generator/handlers"
 	"pdf_form_generator/utils"
+	"fmt"
 )
 
 func main() {
@@ -50,8 +51,14 @@ func main() {
 		Handler: r,
 	}
 
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal("Getwd:", err)
+	}
+
 	go func() {
-		if err := srv.ListenAndServeTLS("testdata/server.pem", "testdata/server.key"); err != nil {
+		if err := srv.ListenAndServeTLS(pwd + "testdata/server.pem", pwd + "testdata/server.key"); err != nil {
 			log.Printf("listen: %s\n", err)
 		}
 	}()

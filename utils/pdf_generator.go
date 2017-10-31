@@ -24,14 +24,21 @@ func ParsePdfToPng(url *url.URL, file multipart.File, headers *multipart.FileHea
 		log.Fatal(err)
 	}
 
-	folderForPDF := props.TempPath + randomFileName
+	pwd, err := os.Getwd()
 
-	if err := os.Mkdir(folderForPDF, 0755); err != nil {
+	if err != nil {
+		return result, err
+	}
+
+	absoluteFolderForPDF := pwd + "/" + props.TempPath + "/" + randomFileName
+	relativeFolderForPDF := "/" + props.TempPath + "/" + randomFileName
+
+	if err := os.Mkdir(absoluteFolderForPDF, 0755); err != nil {
 		fmt.Println("Cannot Create Folder:", err)
 		return result, err
 	}
 
-	imageFilePathWithoutExtension := folderForPDF + "/" + randomFileName
+	imageFilePathWithoutExtension := absoluteFolderForPDF + "/" + randomFileName
 	extension := filepath.Ext(headers.Filename)
 	imageFilePathWithExtension := imageFilePathWithoutExtension + extension
 	f, err := os.OpenFile(imageFilePathWithExtension, os.O_WRONLY|os.O_CREATE, 0666)
@@ -63,11 +70,13 @@ func ParsePdfToPng(url *url.URL, file multipart.File, headers *multipart.FileHea
 
 		for i := 0; i < int(numberOfPages); i++ {
 			page := fmt.Sprintf("%s[%d]", imageFilePathWithExtension, i)
-			output := fmt.Sprintf("%s/%s.%d.png", folderForPDF, Random(), i)
+			randomName := Random()
+			output := fmt.Sprintf("%s/%s[%d].png", absoluteFolderForPDF, randomName, i)
+			relativeOutput := fmt.Sprintf("%s/%s[%d].png", relativeFolderForPDF, randomName, i)
 			command := fmt.Sprintf("convert -verbose -trim -density %d -resize %s -depth %d -flatten %s %s", 400, "25%", 8, page, output)
 			fmt.Println(command)
 			wg.Add(1)
-			result = append(result, schemaAndHost + output[1:])
+			result = append(result, schemaAndHost + relativeOutput)
 
 			go pdfToImagesCommand(command, wg)
 		}
