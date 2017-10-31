@@ -1,4 +1,4 @@
-###1. Install dependencies with two steps
+### Install dependencies dep
 
     go get -u github.com/golang/dep/cmd/dep
     dep ensure
