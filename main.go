@@ -14,34 +14,7 @@ import (
 	"pdf_form_generator/utils"
 )
 
-const WEB_SERVER_PORT = ":8443"
-
-//func DBConnectHandler(db *gorm.DB) gin.HandlerFunc {
-//	return func(ctx *gin.Context) {
-//		ctx.Set("DB", db)
-//	}
-//}
-
 func main() {
-	//db, err := gorm.Open("mysql", "ddidev:ddipass@tcp(127.0.0.1:3307)/akela?charset=utf8&parseTime=True&loc=Local")
-	//
-	//if err != nil {
-	//	log.Print(err)
-	//}
-	//
-	//defer db.Close()
-	//
-	//f, err := os.OpenFile("logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	//
-	//if err != nil {
-	//	log.Fatalf("error opening file: %v", err)
-	//}
-	//
-	//defer f.Close()
-	//
-	//gin.SetMode(gin.DebugMode)
-	//gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
-
 	props, err := utils.ParseJSONConfig()
 
 	if err != nil {
@@ -55,7 +28,6 @@ func main() {
 
 	r.Use(gin.Logger())
 	r.Use(location.Default())
-	//r.Use(DBConnectHandler(db))
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
