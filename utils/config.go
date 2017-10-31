@@ -11,6 +11,8 @@ type Properties struct {
 	StaticPath string
 	NodeModulesPath string
 	TempPath string
+	ServerPem string
+	ServerKey string
 }
 
 var config = Properties{}

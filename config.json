@@ -2,5 +2,7 @@
   "Port": ":8443",
   "StaticPath": "static",
   "NodeModulesPath": "node_modules",
-  "TempPath": "temp"
+  "TempPath": "temp",
+  "ServerPem": "/home/ddi-dev/go/src/pdf_form_generator/testdata/server.pem",
+  "ServerKey": "/home/ddi-dev/go/src/pdf_form_generator/testdata/server.key"
 }
