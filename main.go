@@ -10,8 +10,8 @@ import (
 	"context"
 	"time"
 	"net/http"
-	"pdf_form_generator/handlers"
-	"pdf_form_generator/utils"
+	"github.com/ibogdan94/pdf_form_generator/handlers"
+	"github.com/ibogdan94/pdf_form_generator/utils"
 )
 
 func main() {
