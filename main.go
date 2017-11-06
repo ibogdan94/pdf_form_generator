@@ -29,7 +29,6 @@ func main() {
 		gin.DisableConsoleColor()
 	} else {
 		gin.SetMode(gin.DebugMode)
-		r.Use(gin.Logger())
 	}
 
 	f, err := os.Create(props.LogFileName)
