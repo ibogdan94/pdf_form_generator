@@ -1,8 +1,10 @@
 {
-  "Port": ":8443",
-  "StaticPath": "static",
-  "NodeModulesPath": "node_modules",
-  "TempPath": "temp",
-  "ServerPem": "/home/ddi-dev/go/src/pdf_form_generator/testdata/server.pem",
-  "ServerKey": "/home/ddi-dev/go/src/pdf_form_generator/testdata/server.key"
+  "port": ":8443",
+  "static_path": "static",
+  "node_modules_path": "node_modules",
+  "temp_path": "temp",
+  "server_pem": "/home/ddi-dev/go/src/github.com/ibogdan94/pdf_form_generator/testdata/server.pem",
+  "server_key": "/home/ddi-dev/go/src/github.com/ibogdan94/pdf_form_generator/testdata/server.key",
+  "env": "dev",
+  "log_file_name": "stdout.log"
 }

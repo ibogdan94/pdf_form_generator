@@ -7,12 +7,14 @@ import (
 )
 
 type Properties struct {
-	Port string
-	StaticPath string
-	NodeModulesPath string
-	TempPath string
-	ServerPem string
-	ServerKey string
+	Port            string `json:"port"`
+	StaticPath      string `json:"static_path"`
+	NodeModulesPath string `json:"node_modules_path"`
+	TempPath        string `json:"temp_path"`
+	ServerPem       string `json:"server_pem"`
+	ServerKey       string `json:"server_key"`
+	Env             string `json:"env"`
+	LogFileName     string `json:"log_file_name"`
 }
 
 var config = Properties{}
@@ -37,7 +39,6 @@ func ParseJSONConfig() (props Properties, err error) {
 	if err := json.Unmarshal(payload, &config); err != nil {
 		return config, err
 	}
-
 
 	return config, nil
 }

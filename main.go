@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"github.com/ibogdan94/pdf_form_generator/handlers"
 	"github.com/ibogdan94/pdf_form_generator/utils"
+	"io"
 )
 
 func main() {
@@ -21,12 +22,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-
 	r := gin.Default()
 
-	//gin.SetMode(gin.ReleaseMode)
+	if props.Env == "prod" {
+		gin.SetMode(gin.ReleaseMode)
+		gin.DisableConsoleColor()
+	} else {
+		gin.SetMode(gin.DebugMode)
+		r.Use(gin.Logger())
+	}
 
-	r.Use(gin.Logger())
+	f, err := os.Create(props.LogFileName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+	log.SetOutput(gin.DefaultWriter)
+
 	r.Use(location.Default())
 
 	config := cors.DefaultConfig()
@@ -50,17 +64,19 @@ func main() {
 		Handler: r,
 	}
 
-	go func() {
-		if err := srv.ListenAndServeTLS(props.ServerPem, props.ServerKey); err != nil {
-			log.Printf("listen: %s\n", err)
-		}
-	}()
-
-	//go func() {
-	//	if err := srv.ListenAndServe(); err != nil {
-	//		log.Printf("listen: %s\n", err)
-	//	}
-	//}()
+	if props.ServerPem != "" && props.ServerKey != "" {
+		go func() {
+			if err := srv.ListenAndServeTLS(props.ServerPem, props.ServerKey); err != nil {
+				log.Printf("listen: %s\n", err)
+			}
+		}()
+	} else {
+		go func() {
+			if err := srv.ListenAndServe(); err != nil {
+				log.Printf("listen: %s\n", err)
+			}
+		}()
+	}
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
