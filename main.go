@@ -15,12 +15,16 @@ import (
 	"io"
 )
 
-func main() {
-	props, err := utils.ParseJSONConfig()
+func init()  {
+	_, err := utils.ParseJSONConfig()
 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	props := utils.Config
 
 	r := gin.Default()
 
@@ -31,7 +35,21 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	f, err := os.Create(props.LogFileName)
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resultFolder := pwd + "/" + utils.Config.TempPath + "/result"
+
+	if _, err := os.Stat(resultFolder); os.IsNotExist(err) {
+		if err := os.Mkdir(resultFolder, 0755); err != nil {
+			log.Fatalf("Cannot create result folder %s. Error: %s", resultFolder, err)
+		}
+	}
+
+	f, err := os.Create(pwd + "/logs/" + time.Now().Format("20060102150405") + ".log")
 
 	if err != nil {
 		log.Fatal(err)
@@ -56,10 +74,10 @@ func main() {
 
 	r.GET("/", handlers.HomeHandler)
 	r.POST("/api/v1/pdf/upload", handlers.ValidateUploadPDF)
-	r.POST("/api/v1/pdf/save", handlers.SavePDF)
+	r.POST("/api/v1/pdf/generate/:code", handlers.GeneratePDF)
 
 	srv := &http.Server{
-		Addr: props.Port,
+		Addr:    props.Port,
 		Handler: r,
 	}
 

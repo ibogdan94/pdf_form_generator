@@ -12,71 +12,54 @@ import (
 	"github.com/unidoc/unidoc/pdf/creator"
 	"log"
 	"gopkg.in/gographics/imagick.v3/imagick"
-	"net/url"
 )
 
-func ParsePdfToPng(url *url.URL, file multipart.File, headers *multipart.FileHeader) (result []string, error error) {
-	randomFileName := Random()
-
-	props, err := ParseJSONConfig()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func ParsePdfToPng(schemaAndHost string, file multipart.File, code string, headers *multipart.FileHeader) (result []string, error error) {
 	pwd, err := os.Getwd()
 
 	if err != nil {
 		return result, err
 	}
 
-	absoluteFolderForPDF := pwd + "/" + props.TempPath + "/" + randomFileName
-	relativeFolderForPDF := "/" + props.TempPath + "/" + randomFileName
+	absoluteFolderForPDF := pwd + "/" + Config.TempPath + "/" + code
+	relativeFolderForPDF := "/" + Config.TempPath + "/" + code
 
 	if err := os.Mkdir(absoluteFolderForPDF, 0755); err != nil {
-		fmt.Println("Cannot Create Folder:", err)
+		log.Printf("Cannot Create Folder. Error: %s", err)
 		return result, err
 	}
 
-	imageFilePathWithoutExtension := absoluteFolderForPDF + "/" + randomFileName
+	imageFilePathWithoutExtension := absoluteFolderForPDF + "/" + code
 	extension := filepath.Ext(headers.Filename)
 	imageFilePathWithExtension := imageFilePathWithoutExtension + extension
 	f, err := os.OpenFile(imageFilePathWithExtension, os.O_WRONLY|os.O_CREATE, 0666)
 
 	if err != nil {
-		fmt.Println("Cannot Open File:", err)
+		log.Printf("Cannot Open File. Error: %s", err)
 		return result, err
 	}
 
 	defer f.Close()
 	io.Copy(f, file)
 
-	imagick.Initialize()
-	defer imagick.Terminate()
+	numberOfPages, err := GetNumberOfPages(imageFilePathWithExtension)
 
-	mw := imagick.NewMagickWand()
-
-	if err := mw.PingImage(imageFilePathWithExtension); err != nil {
-		fmt.Println("Cannot PingImage:", err)
+	if err != nil {
 		return result, err
 	}
-
-	numberOfPages := mw.GetNumberImages()
-
-	schemaAndHost := url.Scheme + "://" + url.Host
 
 	if numberOfPages > 0 {
 		wg := new(sync.WaitGroup)
 
 		for i := 0; i < int(numberOfPages); i++ {
 			page := fmt.Sprintf("%s[%d]", imageFilePathWithExtension, i)
-			randomName := Random()
-			output := fmt.Sprintf("%s/%s[%d].png", absoluteFolderForPDF, randomName, i)
-			relativeOutput := fmt.Sprintf("%s/%s[%d].png", relativeFolderForPDF, randomName, i)
-			command := fmt.Sprintf("convert -verbose -trim -density %d -resize %s -depth %d -flatten %s %s", 400, "25%", 8, page, output)
+			output := fmt.Sprintf("%s/%s[%d].png", absoluteFolderForPDF, code, i)
+			relativeOutput := fmt.Sprintf("%s/%s[%d].png", relativeFolderForPDF, code, i)
+			//300dpi for printing
+			command := fmt.Sprintf("convert -resize 2480x3508 -verbose -trim -density %d -depth %d -flatten %s %s", 300, 8, page, output)
 			fmt.Println(command)
 			wg.Add(1)
-			result = append(result, schemaAndHost + relativeOutput)
+			result = append(result, schemaAndHost+relativeOutput)
 
 			go pdfToImagesCommand(command, wg)
 		}
@@ -99,6 +82,21 @@ func pdfToImagesCommand(cmd string, wg *sync.WaitGroup) {
 
 	fmt.Printf("%s", out)
 	wg.Done()
+}
+
+func GetNumberOfPages(imageFilePathWithExtension string) (numberOfPages int, err error) {
+	imagick.Initialize()
+	defer imagick.Terminate()
+
+	mw := imagick.NewMagickWand()
+
+	if err := mw.PingImage(imageFilePathWithExtension); err != nil {
+		fmt.Println("Cannot PingImage:", err)
+		return numberOfPages, err
+	}
+
+	numberOfPages = int(mw.GetNumberImages())
+	return
 }
 
 func ImagesToPdf(inputPaths []string, outputPath string) error {
@@ -130,4 +128,47 @@ func ImagesToPdf(inputPaths []string, outputPath string) error {
 
 	err := c.WriteToFile(outputPath)
 	return err
+}
+
+func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithElements, data []DataType) (fileDestination string, err error) {
+	var args []string
+
+	args = append(args, absoluteFilePath)
+
+	if len(data) > 0 {
+		for _, object := range pngPage.CanvasElements.Objects {
+			//wg := new(sync.WaitGroup)
+
+			for _, dataType := range data {
+				//wg.Add(1)
+				//go func(label *DataType) {
+				if dataType.Placeholder == object.Text {
+					object.Text = dataType.Value
+					object.Prepare()
+
+					args = append(args, "-fill", object.Fill, "-pointsize", fmt.Sprintf("%v", object.FontSize), "-weight", fmt.Sprintf("%v", object.FontWeight), "-annotate", fmt.Sprintf("+%v+%v", object.Left, object.Top), object.Text)
+				}
+				//wg.Done()
+				//}(&dataType)
+			}
+
+			//wg.Wait()
+		}
+	}
+
+	fileDestination = absoluteFilePath[:len(absoluteFilePath)-4] + "_temp.png"
+	args = append(args, []string{"-verbose", "-trim", "-density", "300", "-depth", "8", "-flatten", fileDestination,}...)
+
+	cmd := exec.Command("magick", args...)
+
+	//fmt.Println(cmd)
+
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Printf(fmt.Sprint(err) + ": " + string(output))
+		return fileDestination, err
+	}
+
+	return fileDestination, err
 }

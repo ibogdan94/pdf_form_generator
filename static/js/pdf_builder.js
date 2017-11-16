@@ -2,6 +2,7 @@ const pdfEditor = {
     CANVAS_ELEMENTS: [],
     CLICKED_ON_CANVAS: false,
     CLICKED_ON_BEFORE: false,
+    CODE: "",
     init: function () {
         this.initDropZone();
         $("#addbutton").on("click", pdfEditor.addText);
@@ -53,6 +54,7 @@ const pdfEditor = {
 
                 this.on("success", function(file, responseText) {
                     if (responseText.images.length > 0) {
+                        pdfEditor.CODE = responseText.code;
                         $(".dropzone").animate({"minHeight": 150});
                         $("#secondStep").show();
                         let $canvasArea = $('#canvasArea');
@@ -75,8 +77,8 @@ const pdfEditor = {
     createCanvasElement: function (id) {
         this.canvas = document.createElement('canvas');
         this.canvas.id = id;
-        this.canvas.width = 828;
-        this.canvas.height = 1100;
+        this.canvas.width = 2480;
+        this.canvas.height = 3507;
         return this.canvas;
     },
     initPdfEditor: function (canvas, src, pageNumber) {
@@ -87,9 +89,21 @@ const pdfEditor = {
             src,
             CANVAS.renderAll.bind(CANVAS),
             {
-                crossOrigin: 'anonymous'
+                crossOrigin: 'anonymous',
             }
         );
+
+        CANVAS.setZoom(0.4);
+
+        if (localStorage.getItem("temp")) {
+            const objcs = localStorage.getItem("temp");
+            CANVAS.loadFromJSON(objcs, function () {
+                CANVAS.renderAll();
+                CANVAS.calcOffset();
+            }, function(o, object) {
+                CANVAS.setActiveObject(object);
+            });
+        }
 
         pdfEditor.CANVAS_ELEMENTS.push({"page": pageNumber, "canvas": CANVAS, "src": src});
 
@@ -135,19 +149,22 @@ const pdfEditor = {
     },
     addText: function (e) {
         let $newText = $('#newtext');
+        // const fontSize = parseInt($('#fontSize-control').val(), 10) * 2.54;
+        const fontSize = 53.34;
         let text = new fabric.Text($newText.val(), {
-            fontSize: parseInt($('#fontSize-control').val(), 10),
+            fontSize: fontSize,
             fontWeight: parseInt($('#fontWeight-control').val(), 10),
-            charSpacing: parseInt($('#charSpacing-control').val(), 10),
+            fontFamily: "Helvetica"
+            // charSpacing: parseInt($('#charSpacing-control').val(), 10),
         });
 
-        let color = $('#color-control').val();
+        // let color = $('#color-control').val();
+        //
+        // if (color === "") {
+        //     color = "#000";
+        // }
 
-        if (color === "") {
-            color = "#000";
-        }
-
-        text.setColor(color);
+        text.setColor("#ff0000");
 
         let canvasData = pdfEditor.getSelectedCanvas();
         let CANVAS = canvasData.canvas;
@@ -280,18 +297,56 @@ const pdfEditor = {
         let i = 1;
 
         for (let page of pdfEditor.CANVAS_ELEMENTS) {
-            results.push({"page": i, "b64": page.canvas.toDataURL()});
+            const canvasObjs = page.canvas.toJSON().objects;
+
+            console.log(page.canvas.toJSON());
+
+            let objects = [];
+
+            if (canvasObjs.length > 0) {
+                for (let element of canvasObjs) {
+                    if (element.type === "text") {
+                        objects.push(element);
+                        console.log(`+:${element.left}+${element.top} '${element.text}'`);
+                    }
+                }
+            }
+
+            // if (objects.length > 0) {
+            //     localStorage.setItem("temp", JSON.stringify(page.canvas.toJSON()));
+            // }
+            //
+            // console.log(canvasObjs);
+
+            results.push({"page": i, "b64": page.canvas.toDataURL(), "canvasElements": page.canvas.toJSON()});
+            console.log(JSON.stringify({"page": i, "data": [{"placeholder": "", "value": ""}], "canvasElements": page.canvas.toJSON()}));
             i++;
         }
 
-        $.ajax({
-            "method": "POST",
-            "url": "/api/v1/pdf/save",
-            "data": JSON.stringify(results)
-        }).done(function (result) {
+        // console.log(results);
+        // console.log(JSON.stringify(results));
 
-        }).fail(function () {
-
-        });
+        // $.ajax({
+        //     "method": "POST",
+        //     "url": "/api/v1/pdf/save2?code=" + pdfEditor.CODE,
+        //     "data": JSON.stringify(results)
+        // }).done(function (result) {
+        //     const page = result.pages[0];
+        //     localStorage.setItem("temp", JSON.stringify(page.canvasElements));
+        // }).fail(function () {
+        //
+        // });
     }
 };
+
+function keysToLowerCase(obj){
+    Object.keys(obj).forEach(function (key) {
+        var k = key.toLowerCase();
+
+        if (k !== key) {
+            obj[k] = obj[key];
+            delete obj[key];
+        }
+    });
+    return (obj);
+}

@@ -17,28 +17,28 @@ type Properties struct {
 	LogFileName     string `json:"log_file_name"`
 }
 
-var config = Properties{}
+var Config = Properties{}
 
 func ParseJSONConfig() (props Properties, err error) {
-	if config.Port != "" {
-		return config, nil
+	if Config.Port != "" {
+		return Config, nil
 	}
 
 	pwd, err := os.Getwd()
 
 	if err != nil {
-		return config, err
+		return Config, err
 	}
 
 	payload, err := ioutil.ReadFile(pwd + "/config.json")
 
 	if err != nil {
-		return config, err
+		return Config, err
 	}
 
-	if err := json.Unmarshal(payload, &config); err != nil {
-		return config, err
+	if err := json.Unmarshal(payload, &Config); err != nil {
+		return Config, err
 	}
 
-	return config, nil
+	return Config, nil
 }
