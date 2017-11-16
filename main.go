@@ -15,7 +15,7 @@ import (
 	"io"
 )
 
-func init()  {
+func init() {
 	_, err := utils.ParseJSONConfig()
 
 	if err != nil {

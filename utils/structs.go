@@ -31,7 +31,7 @@ type DataType struct {
 
 type CanvasElements struct {
 	//BackgroundImage Image  `json:"backgroundImage" `
-	Objects         []Text `json:"objects"`
+	Objects []Text `json:"objects"`
 }
 
 type BaseObject struct {
