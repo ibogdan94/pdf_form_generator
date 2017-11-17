@@ -74,6 +74,7 @@ func main() {
 
 	r.GET("/", handlers.HomeHandler)
 	r.POST("/api/v1/pdf/upload", handlers.ValidateUploadPDF)
+	r.GET("/api/v1/pdf/:code", handlers.GetImagesByCode)
 	r.POST("/api/v1/pdf/generate/:code", handlers.GeneratePDF)
 
 	srv := &http.Server{

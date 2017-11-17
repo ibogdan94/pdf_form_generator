@@ -12,6 +12,7 @@ import (
 	"github.com/unidoc/unidoc/pdf/creator"
 	"log"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"regexp"
 )
 
 func ParsePdfToPng(schemaAndHost string, file multipart.File, code string, headers *multipart.FileHeader) (result []string, error error) {
@@ -147,6 +148,10 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithEl
 					object.Prepare()
 
 					args = append(args, "-fill", object.Fill, "-pointsize", fmt.Sprintf("%v", object.FontSize), "-weight", fmt.Sprintf("%v", object.FontWeight), "-annotate", fmt.Sprintf("+%v+%v", object.Left, object.Top), object.Text)
+
+					if object.BackgroundColor != "" {
+						args = append(args,  "-undercolor", object.BackgroundColor)
+					}
 				}
 				//wg.Done()
 				//}(&dataType)
@@ -171,4 +176,22 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithEl
 	}
 
 	return fileDestination, err
+}
+
+func GetFilesInFolderByExt(absoluteDir string, ext string) (files []string, err error) {
+	if _, err := os.Stat(absoluteDir); os.IsNotExist(err) {
+		return files, err
+	}
+
+	filepath.Walk(absoluteDir, func(path string, f os.FileInfo, _ error) error {
+		if !f.IsDir() {
+			r, err := regexp.MatchString(ext, f.Name())
+			if err == nil && r {
+				files = append(files, f.Name())
+			}
+		}
+		return nil
+	})
+
+	return files, err
 }

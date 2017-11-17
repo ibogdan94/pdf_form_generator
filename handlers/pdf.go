@@ -180,3 +180,47 @@ func savePDF(code string, pngsAbsolutePath []string) (pdfRelativeLink string, er
 
 	return pdfRelativeLink, err
 }
+
+func GetImagesByCode(ctx *gin.Context) {
+	code := ctx.Param("code")
+
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Printf("Error: %s", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Cannot generate pdf file",
+		})
+	}
+
+	pdfPath := pwd + "/" + utils.Config.TempPath + "/" + code
+	pages, err := utils.GetFilesInFolderByExt(pdfPath, ".png")
+
+	if err != nil {
+		log.Printf("Cannot generate pdf file: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "File does not exist",
+		})
+		return
+	}
+
+	if len(pages) == 0 {
+		log.Print("No file was found")
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "No file was found",
+		})
+		return
+	}
+
+	var urls []string
+
+	for _, page := range pages {
+		pageUrl := utils.GetSchemaAndHost(ctx) + "/" + utils.Config.TempPath + "/" + code + "/" + page
+		urls = append(urls, pageUrl)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"images": urls,
+	})
+	return
+}
