@@ -81,7 +81,7 @@ type Text struct {
 	BaseObject
 	BackgroundColor     string      `json:"backgroundColor"`
 	FontFamily          string      `json:"fontFamily"`
-	FontSize            float64     `json:"fontSize"`
+	FontSize            string      `json:"fontSize"`
 	FontStyle           string      `json:"fontStyle"`
 	FontWeight          int         `json:"fontWeight"`
 	LineHeight          float64     `json:"lineHeight"`
