@@ -147,11 +147,7 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithEl
 					object.Text = dataType.Value
 					object.Prepare()
 
-					args = append(args, "-fill", object.Fill, "-pointsize", fmt.Sprintf("%v", object.FontSize), "-weight", fmt.Sprintf("%v", object.FontWeight), "-annotate", fmt.Sprintf("+%v+%v", object.Left, object.Top), object.Text)
-
-					if object.BackgroundColor != "" {
-						args = append(args,  "-undercolor", object.BackgroundColor)
-					}
+					args = append(args, "-fill", object.Fill, "-undercolor", object.BackgroundColor, "-pointsize", fmt.Sprintf("%v", object.FontSize), "-weight", fmt.Sprintf("%v", object.FontWeight), "-annotate", fmt.Sprintf("+%v+%v", object.Left, object.Top), object.Text)
 				}
 				//wg.Done()
 				//}(&dataType)
@@ -166,7 +162,7 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithEl
 
 	cmd := exec.Command("magick", args...)
 
-	//fmt.Println(cmd)
+	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 

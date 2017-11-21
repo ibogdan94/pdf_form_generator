@@ -105,6 +105,10 @@ func (t *Text) Prepare() {
 	if t.Fill == "" {
 		t.Fill = "#000"
 	}
+
+	if t.BackgroundColor == "" {
+		t.BackgroundColor = "transparent"
+	}
 }
 
 type PngWithProps struct {
