@@ -16,6 +16,7 @@ func ValidateUploadPDF(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "PDF file not found",
 		})
+		return
 	}
 
 	mimeType := headers.Header.Get("Content-Type")
@@ -24,6 +25,7 @@ func ValidateUploadPDF(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Only PDP file can be loaded",
 		})
+		return
 	}
 
 	defer file.Close()
@@ -35,18 +37,21 @@ func ValidateUploadPDF(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Something went wrong. Try again later",
 		})
+		return
 	}
 
 	if len(result) == 0 {
 		ctx.JSON(http.StatusOK, gin.H{
 			"message": "No results was generated",
 		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"images": result,
 		"code":   code,
 	})
+	return
 }
 
 func GeneratePDF(ctx *gin.Context) {
@@ -127,6 +132,7 @@ func GeneratePDF(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"pdf": pdfUrl,
 	})
+	return
 }
 
 func clearTempPngWithPlaceholders(pngs []string) (err error) {
