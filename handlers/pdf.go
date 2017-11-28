@@ -230,3 +230,44 @@ func GetImagesByCode(ctx *gin.Context) {
 	})
 	return
 }
+
+
+func Cleanup(ctx *gin.Context) {
+	var pdfCodes utils.PdfCodes
+
+	if err := ctx.BindJSON(&pdfCodes); err != nil {
+		log.Printf("Json error:%s\n", err)
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Cannot bind JSON",
+		})
+		return
+	}
+
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Printf("Error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
+		return
+	}
+
+	tempPath := pwd + "/" + utils.Config.TempPath
+
+	err = utils.Walker(tempPath, pdfCodes.Codes)
+
+	if err != nil {
+		log.Printf("walk error [%v]\n", err)
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "walk error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Extra folders successfully removed",
+	})
+	return
+}

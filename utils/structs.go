@@ -117,3 +117,7 @@ type PngWithProps struct {
 	Generated      string         `json:"generated" binding:"required"`
 	Original       string         `json:"original" binding:"required"`
 }
+
+type PdfCodes struct {
+	Codes      []string `json:"codes"`
+}
