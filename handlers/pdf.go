@@ -7,6 +7,8 @@ import (
 	"github.com/ibogdan94/pdf_form_generator/utils"
 	"os"
 	"log"
+	"sync"
+	"sort"
 )
 
 func ValidateUploadPDF(ctx *gin.Context) {
@@ -55,6 +57,7 @@ func ValidateUploadPDF(ctx *gin.Context) {
 }
 
 func GeneratePDF(ctx *gin.Context) {
+	fmt.Println("Generate PDF")
 	var pngData utils.PngToPdf
 	code := ctx.Param("code")
 
@@ -88,36 +91,63 @@ func GeneratePDF(ctx *gin.Context) {
 
 	relativePrefix := utils.Config.TempPath + "/" + code + "/" + code
 
-	//array of generated png from request
-	var pngs []string
+	pngs := make(map[int]string, len(pngData.Pages))
+
+	wg := new(sync.WaitGroup)
+
+	var mutex = &sync.Mutex{}
+
+	wg.Add(len(pngData.Pages))
 
 	for index, page := range pngData.Pages {
-		pageName := fmt.Sprintf("%s[%d].png", relativePrefix, index)
-		absolutePagePath := pwd + "/" + pageName
-		if _, err := os.Stat(absolutePagePath); os.IsNotExist(err) {
-			log.Printf("Page %d for file with code %s was not found. Error: %s\n", index, code, err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Page does not exist",
-			})
-			return
-		}
+		go func(index int, page utils.PngPageWithElements) {
+			pageName := fmt.Sprintf("%s[%d].png", relativePrefix, index)
+			absolutePagePath := pwd + "/" + pageName
+			if _, err := os.Stat(absolutePagePath); os.IsNotExist(err) {
+				log.Printf("Page %d for file with code %s was not found. Error: %s\n", index, code, err)
+				//ctx.JSON(http.StatusInternalServerError, gin.H{
+				//	"message": "Page does not exist",
+				//})
+				//return
+			}
 
-		fileDestination, err := utils.ImagesWithPlaceHoldersToPdf(absolutePagePath, &page, pngData.Data)
+			fileDestination, err := utils.ImagesWithPlaceHoldersToPdf(absolutePagePath, page, pngData.Data)
 
-		if err != nil {
-			log.Printf("Error: %v\n", err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Something went wrong",
-			})
-			return
-		}
+			if err != nil {
+				log.Printf("Error: %v\n", err)
+				//ctx.JSON(http.StatusInternalServerError, gin.H{
+				//	"message": "Something went wrong",
+				//})
+				//return
+			}
 
-		pngs = append(pngs, fileDestination)
+			mutex.Lock()
+			fmt.Println(fileDestination)
+			pngs[index] = fileDestination
+			wg.Done()
+			mutex.Unlock()
+		}(index, page)
 	}
 
-	pdfRelativeLink, err := savePDF(code, pngs)
+	wg.Wait()
 
-	clearTempPngWithPlaceholders(pngs)
+	var keys []int
+
+	for k := range pngs {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+
+	var sortedPngs []string
+
+	for _, k := range keys {
+		sortedPngs = append(sortedPngs, pngs[k])
+	}
+
+	pdfRelativeLink, err := savePDF(code, sortedPngs)
+
+	clearTempPngWithPlaceholders(sortedPngs)
 
 	if err != nil {
 		log.Printf("Cannot generate pdf file: %v\n", err)

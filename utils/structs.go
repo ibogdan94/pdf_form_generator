@@ -25,7 +25,8 @@ type PngPageWithElements struct {
 }
 
 type DataType struct {
-	Placeholder string `json:"placeholder" binding:"required"`
+	Placeholder string `json:"placeholder"`
+	Token       string `json:"token" binding:"required"`
 	Value       string `json:"value" binding:"required"`
 }
 
@@ -119,5 +120,5 @@ type PngWithProps struct {
 }
 
 type PdfCodes struct {
-	Codes      []string `json:"codes"`
+	Codes []string `json:"codes"`
 }

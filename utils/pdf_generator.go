@@ -13,6 +13,7 @@ import (
 	"log"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"regexp"
+	"errors"
 )
 
 func ParsePdfToPng(schemaAndHost string, file multipart.File, code string, headers *multipart.FileHeader) (result []string, error error) {
@@ -101,6 +102,10 @@ func GetNumberOfPages(imageFilePathWithExtension string) (numberOfPages int, err
 }
 
 func ImagesToPdf(inputPaths []string, outputPath string) error {
+	if len(inputPaths) == 0 {
+		return errors.New("no pages for pdf generation")
+	}
+
 	c := creator.New()
 
 	for _, imgPath := range inputPaths {
@@ -131,30 +136,95 @@ func ImagesToPdf(inputPaths []string, outputPath string) error {
 	return err
 }
 
-func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithElements, data []DataType) (fileDestination string, err error) {
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage PngPageWithElements, data []DataType) (fileDestination string, err error) {
 	var args []string
 
 	args = append(args, absoluteFilePath)
 
-	if len(data) > 0 {
+	if len(data) > 0 && len(pngPage.CanvasElements.Objects) > 0 {
+		wg := new(sync.WaitGroup)
+
+		c := make(chan []string)
+
+		wg.Add(len(pngPage.CanvasElements.Objects))
+
+		var mutex = &sync.Mutex{}
+
+		tokens := make([]string, len(data))
+
+		//need clenup
 		for _, object := range pngPage.CanvasElements.Objects {
-			//wg := new(sync.WaitGroup)
+			go func(c chan<- []string, data []DataType, object Text) {
+				for _, dataType := range data {
+					if stringInSlice(dataType.Token, tokens) == false {
+						if dataType.Value == object.Text && dataType.Placeholder == "" {
+							mutex.Lock()
+							tokens = append(tokens, dataType.Token)
+							mutex.Unlock()
 
-			for _, dataType := range data {
-				//wg.Add(1)
-				//go func(label *DataType) {
-				if dataType.Placeholder == object.Text {
-					object.Text = dataType.Value
-					object.Prepare()
+							object.Prepare()
 
-					args = append(args, "-fill", object.Fill, "-undercolor", object.BackgroundColor, "-pointsize", fmt.Sprintf("%v", object.FontSize), "-weight", fmt.Sprintf("%v", object.FontWeight), "-annotate", fmt.Sprintf("+%v+%v", object.Left, object.Top), object.Text)
+							c <- []string{
+								"-fill",
+								object.Fill,
+								"-undercolor",
+								object.BackgroundColor,
+								"-pointsize",
+								fmt.Sprintf("%v", object.FontSize),
+								"-weight",
+								fmt.Sprintf("%v", object.FontWeight),
+								"-annotate",
+								fmt.Sprintf("+%v+%v", object.Left, object.Top),
+								object.Text,
+							}
+
+							break
+						} else if dataType.Placeholder == object.Text {
+							mutex.Lock()
+							tokens = append(tokens, dataType.Token)
+							mutex.Unlock()
+
+							object.Text = dataType.Value
+							object.Prepare()
+
+							c <- []string{
+								"-fill",
+								object.Fill,
+								"-undercolor",
+								object.BackgroundColor,
+								"-pointsize",
+								fmt.Sprintf("%v", object.FontSize),
+								"-weight",
+								fmt.Sprintf("%v", object.FontWeight),
+								"-annotate",
+								fmt.Sprintf("+%v+%v", object.Left, object.Top),
+								object.Text,
+							}
+
+							break
+						}
+					}
 				}
-				//wg.Done()
-				//}(&dataType)
-			}
+				wg.Done()
+			}(c, data, object)
 
-			//wg.Wait()
+			go func(c <-chan []string) {
+				for argsFromChan := range c {
+					args = append(args, argsFromChan...)
+				}
+			}(c)
 		}
+
+		wg.Wait()
 	}
 
 	fileDestination = absoluteFilePath[:len(absoluteFilePath)-4] + "_temp.png"
@@ -162,7 +232,7 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage *PngPageWithEl
 
 	cmd := exec.Command("magick", args...)
 
-	fmt.Println(cmd)
+	//fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 
