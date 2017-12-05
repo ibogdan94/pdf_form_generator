@@ -167,13 +167,11 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage PngPageWithEle
 				for _, dataType := range data {
 					if stringInSlice(dataType.Token, tokens) == false {
 						if dataType.Value == object.Text && dataType.Placeholder == "" {
-							mutex.Lock()
-							tokens = append(tokens, dataType.Token)
-							mutex.Unlock()
-
 							object.Prepare()
 
-							c <- []string{
+							mutex.Lock()
+							tokens = append(tokens, dataType.Token)
+							args = append(args, []string{
 								"-fill",
 								object.Fill,
 								"-undercolor",
@@ -185,18 +183,32 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage PngPageWithEle
 								"-annotate",
 								fmt.Sprintf("+%v+%v", object.Left, object.Top),
 								object.Text,
-							}
+							}...)
+							mutex.Unlock()
+
+							//object.Prepare()
+
+							//c <- []string{
+							//	"-fill",
+							//	object.Fill,
+							//	"-undercolor",
+							//	object.BackgroundColor,
+							//	"-pointsize",
+							//	fmt.Sprintf("%v", object.FontSize),
+							//	"-weight",
+							//	fmt.Sprintf("%v", object.FontWeight),
+							//	"-annotate",
+							//	fmt.Sprintf("+%v+%v", object.Left, object.Top),
+							//	object.Text,
+							//}
 
 							break
 						} else if dataType.Placeholder == object.Text {
+							object.Prepare()
+							object.Text = dataType.Value
 							mutex.Lock()
 							tokens = append(tokens, dataType.Token)
-							mutex.Unlock()
-
-							object.Text = dataType.Value
-							object.Prepare()
-
-							c <- []string{
+							args = append(args, []string{
 								"-fill",
 								object.Fill,
 								"-undercolor",
@@ -208,21 +220,39 @@ func ImagesWithPlaceHoldersToPdf(absoluteFilePath string, pngPage PngPageWithEle
 								"-annotate",
 								fmt.Sprintf("+%v+%v", object.Left, object.Top),
 								object.Text,
-							}
+							}...)
+							mutex.Unlock()
+
+
+							//c <- []string{
+							//	"-fill",
+							//	object.Fill,
+							//	"-undercolor",
+							//	object.BackgroundColor,
+							//	"-pointsize",
+							//	fmt.Sprintf("%v", object.FontSize),
+							//	"-weight",
+							//	fmt.Sprintf("%v", object.FontWeight),
+							//	"-annotate",
+							//	fmt.Sprintf("+%v+%v", object.Left, object.Top),
+							//	object.Text,
+							//}
 
 							break
 						}
 					}
 				}
+
 				wg.Done()
 			}(c, data, object)
-
-			go func(c <-chan []string) {
-				for argsFromChan := range c {
-					args = append(args, argsFromChan...)
-				}
-			}(c)
 		}
+
+		//go func(c <-chan []string) {
+		//	for argsFromChan := range c {
+		//		fmt.Println(2)
+		//		args = append(args, argsFromChan...)
+		//	}
+		//}(c)
 
 		wg.Wait()
 	}

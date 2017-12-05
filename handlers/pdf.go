@@ -57,7 +57,6 @@ func ValidateUploadPDF(ctx *gin.Context) {
 }
 
 func GeneratePDF(ctx *gin.Context) {
-	fmt.Println("Generate PDF")
 	var pngData utils.PngToPdf
 	code := ctx.Param("code")
 
@@ -173,7 +172,7 @@ func clearTempPngWithPlaceholders(pngs []string) (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func savePDF(code string, pngsAbsolutePath []string) (pdfRelativeLink string, err error) {
