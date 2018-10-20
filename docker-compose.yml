@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  pdfformgenerator:
+    restart: always
+    environment:
+      - BUILD=false
+    build:
+      context: ./.
+    working_dir: /go/src/pdfformgenerator
+    volumes:
+      - ./.:/go/src/pdfformgenerator
+    command: sh ./start.sh
+    ports:
+      - 82:8080
