@@ -4,12 +4,6 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZq
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/bmatcuk/doublestar v1.1.1 h1:YroD6BJCZBYx06yYFEWvUuKVWQn3vLLQAVmDmvTSaiQ=
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
-github.com/cortesi/modd v0.0.0-20180725224259-36af15fa7abb h1:T7XaiHhZsM+hgAUbVhdcgyMXMD4d2Qw4P2piIT1iP4w=
-github.com/cortesi/modd v0.0.0-20180725224259-36af15fa7abb/go.mod h1:5T9dWHDOkGjkdk7pXuHZgRu4W/7uOkp8IxH1DNscmPA=
-github.com/cortesi/moddwatch v0.0.0-20180721212156-56d4369103b0 h1:YIYi84GzFCjAzFTRsTQFoKV1vRGZlbjtAzdxjFjNwuk=
-github.com/cortesi/moddwatch v0.0.0-20180721212156-56d4369103b0/go.mod h1:UXc2CZTlqaY7wvJBbpDaAsRNU0Wv/D/XbN9Pcam1kkU=
-github.com/cortesi/termlog v0.0.0-20171116205515-87cefd5ac843 h1:sz+t+nXcEBP+hvtorswkEXc3xkXEAkU6AI2i4eii2sQ=
-github.com/cortesi/termlog v0.0.0-20171116205515-87cefd5ac843/go.mod h1:Ko6mGAZIfPhPee+oBtJuuF6S31ag18BtmK9PewP/T5w=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/gin-contrib/cors v0.0.0-20170318125340-cf4846e6a636 h1:oGgJA7DJphAc81EMHZ+2G7Ai2xyg5eoq7bbqzCsiWFc=
@@ -30,9 +24,11 @@ github.com/rjeczalik/notify v0.9.2 h1:MiTWrPj55mNDHEiIX5YUSKefw/+lCQVoAFmD6oQm5w
 github.com/rjeczalik/notify v0.9.2/go.mod h1:aErll2f0sUX9PXZnVNyeiObbmTlk5jnMoCa4QEjJeqM=
 github.com/ugorji/go v0.0.0-20171030155333-d03304bb1d83 h1:BB0GCzzy6LQanGN1JKvvncRsw7xLD4+8X3knFZGYvX0=
 github.com/ugorji/go v0.0.0-20171030155333-d03304bb1d83/go.mod h1:hnLbHMwcvSihnDhEfx2/BzKp2xb0Y+ErdfYcrs9tkJQ=
+github.com/unidoc/unidoc v2.0.1+incompatible h1:IwNeWnUTacFQzYCRzHQj+33zOsbjtHMa+Ukw/1T+Xh8=
 github.com/unidoc/unidoc v2.0.1+incompatible/go.mod h1:xz5DRu10sgNndY6/LrqtXytidQ/aXastVtkIVSxIj3Q=
 golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e h1:IzypfodbhbnViNUO/MEh0FzCUooG97cIGfdggUrUSyU=
 golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/image v0.0.0-20171013013600-f7e31b4ea2e3 h1:L6cQLB9ACjmD4fJ8SQ7pQQoxbYfaBGu2SYbMqWYVIOs=
 golang.org/x/image v0.0.0-20171013013600-f7e31b4ea2e3/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
 golang.org/x/net v0.0.0-20181017193950-04a2e542c03f h1:4pRM7zYwpBjCnfA1jRmhItLxYJkaEnsmuAcRtA347DA=
 golang.org/x/net v0.0.0-20181017193950-04a2e542c03f/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
@@ -44,6 +40,8 @@ gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLks
 gopkg.in/go-playground/validator.v8 v8.18.2 h1:lFB4DoMU6B626w8ny76MV7VX6W2VHct2GVOI3xgiMrQ=
 gopkg.in/go-playground/validator.v8 v8.18.2/go.mod h1:RX2a/7Ha8BgOhfk7j780h4/u/RRjR0eouCJSH80/M2Y=
 gopkg.in/gographics/imagick.v3 v3.1.1/go.mod h1:HbW83cYCl1jftZi3B/VZpVqsuNi4vW7qUrghjxBiT+8=
+gopkg.in/gographics/imagick.v3 v3.2.0 h1:eUwlkCw2fa20OGu47G39Im8c50S9n/CVkh8PwtOKExA=
+gopkg.in/gographics/imagick.v3 v3.2.0/go.mod h1:HbW83cYCl1jftZi3B/VZpVqsuNi4vW7qUrghjxBiT+8=
 gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7 h1:+t9dhfO+GNOIGJof6kPOAenx7YgrZMTdRPV+EsnPabk=
 gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7/go.mod h1:JAlM8MvJe8wmxCU4Bli9HhUf9+ttbYbLASfIpnQbh74=
 mvdan.cc/sh v2.5.1+incompatible h1:IemwoyLct12alEBm+y1+oXp2ZKqhpYjpGHBpM4tEH3Y=

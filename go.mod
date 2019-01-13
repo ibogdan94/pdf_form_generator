@@ -1,12 +1,9 @@
-module github.com/ibogdan94/pdf_form_generator
+module pdf_form_generator
 
 require (
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
-	github.com/cortesi/modd v0.0.0-20180725224259-36af15fa7abb // indirect
-	github.com/cortesi/moddwatch v0.0.0-20180721212156-56d4369103b0 // indirect
-	github.com/cortesi/termlog v0.0.0-20171116205515-87cefd5ac843 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gin-contrib/cors v0.0.0-20170318125340-cf4846e6a636
 	github.com/gin-contrib/location v0.0.0-20170917021833-5220ebf8be6c
@@ -24,7 +21,7 @@ require (
 	golang.org/x/sys v0.0.0-20180926160741-c2ed4eda69e7
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2
-	gopkg.in/gographics/imagick.v3 v3.1.1
+	gopkg.in/gographics/imagick.v3 v3.2.0
 	gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7
 	mvdan.cc/sh v2.5.1+incompatible // indirect
 )

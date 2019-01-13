@@ -1,0 +1,303 @@
+package handlers
+
+//
+//import (
+//	"github.com/gin-gonic/gin"
+//	"net/http"
+//	"fmt"
+//	"github.com/ibogdan94/pdf_form_generator/utils"
+//	"os"
+//	"log"
+//	"sync"
+//	"sort"
+//)
+//
+//func ValidateUploadPDF(ctx *gin.Context) {
+//	file, headers, err := ctx.Request.FormFile("file")
+//
+//	if err != nil {
+//		ctx.JSON(http.StatusBadRequest, gin.H{
+//			"message": "PDF file not found",
+//		})
+//		return
+//	}
+//
+//	mimeType := headers.Header.Get("Content-Type")
+//
+//	if mimeType != "application/pdf" {
+//		ctx.JSON(http.StatusBadRequest, gin.H{
+//			"message": "Only PDP file can be loaded",
+//		})
+//		return
+//	}
+//
+//	defer file.Close()
+//
+//	code := utils.Random()
+//	result, err := utils.ParsePdfToPng(utils.GetSchemaAndHost(ctx), file, code, headers)
+//
+//	if err != nil {
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Something went wrong. Try again later",
+//		})
+//		return
+//	}
+//
+//	if len(result) == 0 {
+//		ctx.JSON(http.StatusOK, gin.H{
+//			"message": "No results was generated",
+//		})
+//		return
+//	}
+//
+//	ctx.JSON(http.StatusOK, gin.H{
+//		"images": result,
+//		"code":   code,
+//	})
+//	return
+//}
+//
+//func GeneratePDF(ctx *gin.Context) {
+//	var pngData utils.PngToPdf
+//	code := ctx.Param("code")
+//
+//	if err := ctx.BindJSON(&pngData); err != nil {
+//		log.Printf("Json error:%s\n", err)
+//
+//		ctx.JSON(http.StatusBadRequest, gin.H{
+//			"message": "Cannot bind JSON",
+//		})
+//		return
+//	}
+//
+//	pwd, err := os.Getwd()
+//
+//	if err != nil {
+//		log.Printf("Error: %s\n", err)
+//
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Something went wrong",
+//		})
+//		return
+//	}
+//
+//	if len(pngData.Pages) == 0 {
+//		log.Printf("Error: %v\n", err)
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Empty data",
+//		})
+//		return
+//	}
+//
+//	relativePrefix := utils.Config.TempPath + "/" + code + "/" + code
+//
+//	pngs := make(map[int]string, len(pngData.Pages))
+//
+//	wg := new(sync.WaitGroup)
+//
+//	var mutex = &sync.Mutex{}
+//
+//	wg.Add(len(pngData.Pages))
+//
+//	for index, page := range pngData.Pages {
+//		go func(index int, page utils.PngPageWithElements) {
+//			pageName := fmt.Sprintf("%s[%d].png", relativePrefix, index)
+//			absolutePagePath := pwd + "/" + pageName
+//			if _, err := os.Stat(absolutePagePath); os.IsNotExist(err) {
+//				log.Printf("Page %d for file with code %s was not found. Error: %s\n", index, code, err)
+//				//ctx.JSON(http.StatusInternalServerError, gin.H{
+//				//	"message": "Page does not exist",
+//				//})
+//				//return
+//			}
+//
+//			fileDestination, err := utils.ImagesWithPlaceHoldersToPdf(absolutePagePath, page, pngData.Data)
+//
+//			if err != nil {
+//				log.Printf("Error: %v\n", err)
+//				//ctx.JSON(http.StatusInternalServerError, gin.H{
+//				//	"message": "Something went wrong",
+//				//})
+//				//return
+//			}
+//
+//			mutex.Lock()
+//			fmt.Println(fileDestination)
+//			pngs[index] = fileDestination
+//			wg.Done()
+//			mutex.Unlock()
+//		}(index, page)
+//	}
+//
+//	wg.Wait()
+//
+//	var keys []int
+//
+//	for k := range pngs {
+//		keys = append(keys, k)
+//	}
+//
+//	sort.Ints(keys)
+//
+//	var sortedPngs []string
+//
+//	for _, k := range keys {
+//		sortedPngs = append(sortedPngs, pngs[k])
+//	}
+//
+//	pdfRelativeLink, err := savePDF(code, sortedPngs)
+//
+//	clearTempPngWithPlaceholders(sortedPngs)
+//
+//	if err != nil {
+//		log.Printf("Cannot generate pdf file: %v\n", err)
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Cannot generate pdf file",
+//		})
+//		return
+//	}
+//
+//	pdfUrl := utils.GetSchemaAndHost(ctx) + "/" + pdfRelativeLink
+//
+//	ctx.JSON(http.StatusOK, gin.H{
+//		"pdf": pdfUrl,
+//	})
+//	return
+//}
+//
+//func clearTempPngWithPlaceholders(pngs []string) (err error) {
+//	for _, png := range pngs {
+//		err := os.Remove(png)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	return nil
+//}
+//
+//func savePDF(code string, pngsAbsolutePath []string) (pdfRelativeLink string, err error) {
+//	pwd, err := os.Getwd()
+//
+//	if err != nil {
+//		log.Printf("Error: %s", err)
+//		return pdfRelativeLink, err
+//	}
+//
+//	resultFolder := pwd + "/" + utils.Config.TempPath + "/result"
+//
+//	if _, err := os.Stat(resultFolder); os.IsNotExist(err) {
+//		if err := os.Mkdir(resultFolder, 0755); err != nil {
+//			log.Println("Cannot create result folder:", resultFolder, err)
+//			return pdfRelativeLink, err
+//		}
+//	}
+//
+//	folderForResult := resultFolder + "/" + code
+//	relativeFolder := utils.Config.TempPath + "/result/" + code
+//
+//	if _, err := os.Stat(folderForResult); os.IsNotExist(err) {
+//		if err := os.Mkdir(folderForResult, 0755); err != nil {
+//			log.Printf("Cannot create Folder: %s", err)
+//			return pdfRelativeLink, err
+//		}
+//	}
+//
+//	pdfName := utils.Random()
+//	pdfPath := fmt.Sprintf("%s/%s.pdf", folderForResult, pdfName)
+//	pdfRelativeLink = fmt.Sprintf("%s/%s.pdf", relativeFolder, pdfName)
+//
+//	err = utils.ImagesToPdf(pngsAbsolutePath, pdfPath)
+//
+//	if err != nil {
+//		log.Printf("Error: %s\n", err)
+//		return pdfRelativeLink, err
+//	}
+//
+//	return pdfRelativeLink, err
+//}
+//
+//func GetImagesByCode(ctx *gin.Context) {
+//	code := ctx.Param("code")
+//
+//	pwd, err := os.Getwd()
+//
+//	if err != nil {
+//		log.Printf("Error: %s", err)
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Cannot generate pdf file",
+//		})
+//	}
+//
+//	pdfPath := pwd + "/" + utils.Config.TempPath + "/" + code
+//	pages, err := utils.GetFilesInFolderByExt(pdfPath, ".png")
+//
+//	if err != nil {
+//		log.Printf("Cannot generate pdf file: %v\n", err)
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "File does not exist",
+//		})
+//		return
+//	}
+//
+//	if len(pages) == 0 {
+//		log.Print("No file was found")
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "No file was found",
+//		})
+//		return
+//	}
+//
+//	var urls []string
+//
+//	for _, page := range pages {
+//		pageUrl := utils.GetSchemaAndHost(ctx) + "/" + utils.Config.TempPath + "/" + code + "/" + page
+//		urls = append(urls, pageUrl)
+//	}
+//
+//	ctx.JSON(http.StatusOK, gin.H{
+//		"images": urls,
+//	})
+//	return
+//}
+//
+//
+//func Cleanup(ctx *gin.Context) {
+//	var pdfCodes utils.PdfCodes
+//
+//	if err := ctx.BindJSON(&pdfCodes); err != nil {
+//		log.Printf("Json error:%s\n", err)
+//
+//		ctx.JSON(http.StatusBadRequest, gin.H{
+//			"message": "Cannot bind JSON",
+//		})
+//		return
+//	}
+//
+//	pwd, err := os.Getwd()
+//
+//	if err != nil {
+//		log.Printf("Error: %v\n", err)
+//		ctx.JSON(http.StatusInternalServerError, gin.H{
+//			"message": "Something went wrong",
+//		})
+//		return
+//	}
+//
+//	tempPath := pwd + "/" + utils.Config.TempPath
+//
+//	err = utils.Walker(tempPath, pdfCodes.Codes)
+//
+//	if err != nil {
+//		log.Printf("walk error [%v]\n", err)
+//		ctx.JSON(http.StatusOK, gin.H{
+//			"message": "walk error",
+//		})
+//		return
+//	}
+//
+//	ctx.JSON(http.StatusOK, gin.H{
+//		"message": "Extra folders successfully removed",
+//	})
+//	return
+//}

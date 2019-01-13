@@ -9,8 +9,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"pdf_form_generator/handlers"
 	"time"
 )
+
+type baseConfig struct {
+	pwd string
+}
+
+var serverConfig baseConfig
 
 //func init() {
 //	_, err := utils.ParseJSONConfig()
@@ -19,6 +26,16 @@ import (
 //		log.Fatal(err)
 //	}
 //}
+
+func init() {
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Fatalf("Cannot get pwd: %s\n", err)
+	}
+
+	serverConfig.pwd = pwd
+}
 
 func main() {
 	//props := utils.Config
@@ -74,6 +91,9 @@ func main() {
 	//r.GET("/api/v1/pdf/:code", handlers.GetImagesByCode)
 	//r.POST("/api/v1/pdf/generate/:code", handlers.GeneratePDF)
 	//r.POST("/api/v1/pdf/cleanup", handlers.Cleanup)
+
+	h := handlers.NewHandlers(serverConfig.pwd)
+	h.SetupRoutes(r)
 
 	srv := &http.Server{
 		Addr:    ":8080",
