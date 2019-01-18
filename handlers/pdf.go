@@ -7,7 +7,7 @@ import (
 )
 
 type Handlers struct {
-	pwd string
+	pdfParser *parser.PdfParser
 }
 
 func (h Handlers) upload(ctx *gin.Context) {
@@ -31,12 +31,31 @@ func (h Handlers) upload(ctx *gin.Context) {
 
 	defer file.Close()
 
-	p := parser.PdfParser{
-		h.pwd,
-		h.pwd + "/" + "output",
+	result, err := h.pdfParser.PdfToPng(file)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err,
+		})
+		return
 	}
 
-	result, err := p.PdfToPng(file)
+	ctx.JSON(http.StatusOK, gin.H{
+		"result": result,
+	})
+}
+
+func (h Handlers) show(ctx *gin.Context) {
+	storeFolderName := ctx.Param("folderName")
+
+	result, err := h.pdfParser.PngsToPdf(storeFolderName)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err,
+		})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"result": result,
@@ -45,10 +64,15 @@ func (h Handlers) upload(ctx *gin.Context) {
 
 func (h *Handlers) SetupRoutes(r *gin.Engine) {
 	r.POST("/pp", h.upload)
+	r.GET("/pp/:folderName", h.show)
 }
 
 func NewHandlers(pwd string) *Handlers {
 	return &Handlers{
-		pwd,
+		&parser.PdfParser{
+			pwd,
+			pwd + "/" + "store",
+			pwd + "/" + "result",
+		},
 	}
 }
