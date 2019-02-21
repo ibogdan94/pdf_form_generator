@@ -19,14 +19,6 @@ type baseConfig struct {
 
 var serverConfig baseConfig
 
-//func init() {
-//	_, err := utils.ParseJSONConfig()
-//
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//}
-
 func init() {
 	pwd, err := os.Getwd()
 

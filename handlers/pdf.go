@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"pdf_form_generator/parser"
 )
@@ -48,7 +49,18 @@ func (h Handlers) upload(ctx *gin.Context) {
 func (h Handlers) show(ctx *gin.Context) {
 	storeFolderName := ctx.Param("folderName")
 
-	result, err := h.pdfParser.PngsToPdf(storeFolderName)
+	var pageElements parser.PngToPdf
+
+	if err := ctx.BindJSON(&pageElements); err != nil {
+		log.Printf("Json error:%s\n", err)
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Cannot bind pdf params",
+		})
+		return
+	}
+
+	result, err := h.pdfParser.PngsToPdf(storeFolderName, pageElements)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -73,6 +85,7 @@ func NewHandlers(pwd string) *Handlers {
 			pwd,
 			pwd + "/" + "store",
 			pwd + "/" + "result",
+			nil,
 		},
 	}
 }

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"github.com/unidoc/unidoc/pdf/creator"
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -24,18 +25,27 @@ type PdfParser struct {
 	Pwd          string
 	StoreFolder  string
 	ResultFolder string
+	Code         *string
+}
+
+func (p *PdfParser) setCode(code string) {
+	p.Code = &code
+}
+
+func (p PdfParser) getCode() string {
+	return *p.Code
 }
 
 func (p PdfParser) PdfToPng(file multipart.File) (result []string, err error) {
-	name := utils.Random()
-	folderToSave := p.StoreFolder + "/" + name
+	p.setCode(utils.Random())
+	folderToSave := p.StoreFolder + "/" + p.getCode()
 
 	if err := p.createFolder(folderToSave); err != nil {
 		log.Println("Cannot create result folder:", folderToSave, err)
 		return result, err
 	}
 
-	absolutePath := folderToSave + "/" + name + ".pdf"
+	absolutePath := folderToSave + "/" + p.getCode() + ".pdf"
 	f, err := os.OpenFile(absolutePath, os.O_WRONLY|os.O_CREATE, 0755)
 
 	if err != nil {
@@ -62,7 +72,7 @@ func (p PdfParser) PdfToPng(file multipart.File) (result []string, err error) {
 
 	for i := 0; i < int(numberOfPages); i++ {
 		page := fmt.Sprintf("%s[%d]", absolutePath, i)
-		output := fmt.Sprintf("%s/%s[%d].png", folderToSave, name, i)
+		output := fmt.Sprintf("%s/%s[%d].png", folderToSave, p.getCode(), i)
 		//300dpi for printing
 		command := fmt.Sprintf("convert -resize 2480x3508 -verbose -trim -density %d -depth %d -flatten %s %s", 300, 8, page, output)
 
@@ -114,7 +124,7 @@ func (p PdfParser) createFolder(outputFolderPath string) (err error) {
 	return
 }
 
-func (p PdfParser) PngsToPdf(code string) (result string, err error) {
+func (p PdfParser) PngsToPdf(code string, pageElements PngToPdf) (result string, err error) {
 	storeFolder := p.StoreFolder + "/" + code
 
 	if _, err := os.Stat(storeFolder); os.IsNotExist(err) {
@@ -122,42 +132,161 @@ func (p PdfParser) PngsToPdf(code string) (result string, err error) {
 		return result, err
 	}
 
-	//todo code duplication
-	resultFolder := p.ResultFolder + "/" + code
+	numberOfPages := len(pageElements.Pages)
 
-	if _, err := os.Stat(resultFolder); !os.IsNotExist(err) {
-		return resultFolder + "/" + code + ".pdf", nil
+	if numberOfPages == 0 {
+		return result, errors.New("no pages")
 	}
 
-	pages := []int{0, 1, 2, 3}
+	p.setCode(code)
+
+	resultFolder := p.ResultFolder + "/" + p.getCode()
+
+	//@todo if exist, need to remove
+	if _, err := os.Stat(resultFolder); !os.IsNotExist(err) {
+		if err := os.RemoveAll(resultFolder); err != nil {
+			return result, errors.New("cannot remove folder")
+		}
+
+	}
+
+	if _, err := os.Stat(resultFolder); os.IsNotExist(err) {
+		if err := os.Mkdir(resultFolder, 0755); err != nil {
+			return result, err
+		}
+	}
 
 	wg := new(sync.WaitGroup)
-	wg.Add(len(pages))
+	wg.Add(numberOfPages)
 
-	mutex := &sync.Mutex{}
+	pngs := make(map[int]string, numberOfPages)
 
-	pngs := make(map[int]string, len(pages))
+	for index, page := range pageElements.Pages {
+		go func(index int, page PngPageWithElements, wg *sync.WaitGroup) {
+			resultPage, err := p.addPlaceholdersToPngImage(page, pageElements.Data)
 
-	for index, page := range pages {
-		go func(index, page int, wg *sync.WaitGroup) {
-			mutex.Lock()
-			pngs[index] = fmt.Sprintf("%s/%s[%d].png", storeFolder, code, page)
-			wg.Done()
-			mutex.Unlock()
+			if err != nil {
+				log.Printf("Error: %v\n", err)
+				//ctx.JSON(http.StatusInternalServerError, gin.H{
+				//	"message": "Something went wrong",
+				//})
+				//return
+			}
+
+			pngs[index] = resultPage
+
+			defer wg.Done()
 		}(index, page, wg)
 	}
 
 	wg.Wait()
 
-	sortedPngs := sortPages(pngs)
-
-	result, err = p.generatePdf(code, sortedPngs)
+	result, err = p.generatePdf(sortPages(pngs))
 
 	if err != nil {
 		return result, err
 	}
 
 	return result, nil
+}
+
+func (p PdfParser) addPlaceholdersToPngImage(pngPage PngPageWithElements, data []DataType) (fileDestination string, err error) {
+	var args []string
+
+	args = append(args, fmt.Sprintf("%s/%s/%s[%d].png", p.StoreFolder, p.getCode(), p.getCode(), pngPage.Page-1))
+
+	if len(data) == 0 && len(pngPage.CanvasElements.Objects) == 0 {
+		return fileDestination, errors.New("not enough data to render page")
+	}
+
+	wg := new(sync.WaitGroup)
+	c := make(chan []string)
+
+	wg.Add(len(pngPage.CanvasElements.Objects))
+
+	usedTokens := make([]string, len(data))
+
+	for _, object := range pngPage.CanvasElements.Objects {
+		go func(c chan<- []string, data []DataType, object Text) {
+			for _, dataType := range data {
+				if stringInSlice(dataType.Token, usedTokens) {
+					continue
+				}
+
+				if dataType.Value == object.Text && dataType.Placeholder == "" {
+					usedTokens = append(usedTokens, dataType.Token)
+
+					c <- []string{
+						"-fill",
+						object.Fill,
+						"-undercolor",
+						object.BackgroundColor,
+						"-pointsize",
+						fmt.Sprintf("%v", object.FontSize),
+						"-weight",
+						fmt.Sprintf("%v", object.FontWeight),
+						"-annotate",
+						fmt.Sprintf("+%v+%v", object.Left, object.Top),
+						object.Text,
+					}
+
+					break
+				} else if dataType.Placeholder == object.Text {
+					object.Text = dataType.Value
+					usedTokens = append(usedTokens, dataType.Token)
+
+					c <- []string{
+						"-fill",
+						object.Fill,
+						"-undercolor",
+						object.BackgroundColor,
+						"-pointsize",
+						fmt.Sprintf("%v", object.FontSize),
+						"-weight",
+						fmt.Sprintf("%v", object.FontWeight),
+						"-annotate",
+						fmt.Sprintf("+%v+%v", object.Left, object.Top),
+						object.Text,
+					}
+
+					break
+				}
+			}
+		}(c, data, object)
+	}
+
+	go func(c <-chan []string) {
+		for argsFromChan := range c {
+			args = append(args, argsFromChan...)
+			wg.Done()
+		}
+	}(c)
+
+	wg.Wait()
+	close(c)
+
+	fileDestination = fmt.Sprintf("%s/%s/%s[%d].png", p.ResultFolder, p.getCode(), p.getCode(), pngPage.Page-1)
+	args = append(args, []string{"-verbose", "-trim", "-density", "300", "-depth", "8", "-flatten", fileDestination}...)
+
+	cmd := exec.Command("magick", args...)
+
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Printf(fmt.Sprint(err) + ": " + string(output))
+		return fileDestination, err
+	}
+
+	return fileDestination, err
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func sortPages(pngs map[int]string) []string {
@@ -178,20 +307,7 @@ func sortPages(pngs map[int]string) []string {
 	return sortedPngs
 }
 
-func (p PdfParser) generatePdf(code string, pngsAbsolutePath []string) (pdfFile string, err error) {
-	//todo code duplication
-	resultFolder := p.ResultFolder + "/" + code
-
-	if _, err := os.Stat(resultFolder); os.IsExist(err) {
-		return resultFolder + "/" + code + ".pdf", nil
-	}
-
-	if _, err := os.Stat(resultFolder); os.IsNotExist(err) {
-		if err := os.Mkdir(resultFolder, 0755); err != nil {
-			return pdfFile, err
-		}
-	}
-
+func (p PdfParser) generatePdf(pngsAbsolutePath []string) (pdfFile string, err error) {
 	c := creator.New()
 
 	for _, imgPath := range pngsAbsolutePath {
@@ -218,7 +334,7 @@ func (p PdfParser) generatePdf(code string, pngsAbsolutePath []string) (pdfFile 
 		}
 	}
 
-	pdfFile = resultFolder + "/" + code + ".pdf"
+	pdfFile = p.ResultFolder + "/" + p.getCode() + "/" + p.getCode() + ".pdf"
 
 	if err := c.WriteToFile(pdfFile); err != nil {
 		log.Printf("WriteToFile: %v", err)
