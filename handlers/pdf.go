@@ -75,8 +75,8 @@ func (h Handlers) show(ctx *gin.Context) {
 }
 
 func (h *Handlers) SetupRoutes(r *gin.Engine) {
-	r.POST("/pp", h.upload)
-	r.GET("/pp/:folderName", h.show)
+	r.POST("/api/pdf", h.upload)
+	r.GET("/api/pdf/:folderName", h.show)
 }
 
 func NewHandlers(pwd string) *Handlers {
