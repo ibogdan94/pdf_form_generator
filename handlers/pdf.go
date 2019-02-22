@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"pdf_form_generator/parser"
+	"strings"
 )
 
 type Handlers struct {
 	pdfParser *parser.PdfParser
+	baseUrl   string
 }
 
 func (h Handlers) upload(ctx *gin.Context) {
@@ -32,13 +34,19 @@ func (h Handlers) upload(ctx *gin.Context) {
 
 	defer file.Close()
 
-	result, err := h.pdfParser.PdfToPng(file)
+	pages, err := h.pdfParser.PdfToPng(file)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err,
 		})
 		return
+	}
+
+	var result []string
+
+	for _, page := range pages {
+		result = append(result, h.convertToPublicUrl(page))
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -70,8 +78,12 @@ func (h Handlers) show(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"result": result,
+		"result": h.convertToPublicUrl(result),
 	})
+}
+
+func (h Handlers) convertToPublicUrl(absolutePath string) string {
+	return strings.Replace(absolutePath, "/go/src/pdf_form_generator", h.baseUrl, -1)
 }
 
 func (h *Handlers) SetupRoutes(r *gin.Engine) {
@@ -79,7 +91,7 @@ func (h *Handlers) SetupRoutes(r *gin.Engine) {
 	r.GET("/api/pdf/:folderName", h.show)
 }
 
-func NewHandlers(pwd string) *Handlers {
+func NewHandlers(pwd string, baseUrl string) *Handlers {
 	return &Handlers{
 		&parser.PdfParser{
 			pwd,
@@ -87,5 +99,6 @@ func NewHandlers(pwd string) *Handlers {
 			pwd + "/" + "result",
 			nil,
 		},
+		baseUrl,
 	}
 }

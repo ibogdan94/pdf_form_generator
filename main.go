@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/location"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -14,10 +15,13 @@ import (
 )
 
 type baseConfig struct {
-	pwd string
+	pwd     string
+	Port    int    `json:"port"`
+	Mode    string `json:"mode"`
+	BaseURL string `json:"baseURL"`
 }
 
-var serverConfig baseConfig
+var config baseConfig
 
 func init() {
 	pwd, err := os.Getwd()
@@ -26,25 +30,31 @@ func init() {
 		log.Fatalf("Cannot get pwd: %s\n", err)
 	}
 
-	serverConfig.pwd = pwd
+	config.pwd = pwd
+
+	payload, err := ioutil.ReadFile(pwd + "/config.json")
+
+	if err != nil {
+		log.Fatalf("Something went wrong with config.json: %s\n", err)
+	}
+
+	if err := json.Unmarshal(payload, &config); err != nil {
+		log.Fatalf("Cannot unmarshal config.json to go struct: %s\n", err)
+	}
 }
 
 func main() {
+	gin.SetMode(config.Mode)
 	r := gin.Default()
 
-	r.Use(location.Default())
+	r.Static("/result", "./result")
+	r.Static("/store", "./store")
 
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	config.AddAllowHeaders("X-Requested-With", "Access-Control-Allow-Headers", "Cache-Control")
-
-	r.Use(cors.New(config))
-
-	h := handlers.NewHandlers(serverConfig.pwd)
+	h := handlers.NewHandlers(config.pwd, config.BaseURL)
 	h.SetupRoutes(r)
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%d", config.Port),
 		Handler: r,
 	}
 

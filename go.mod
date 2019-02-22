@@ -5,8 +5,6 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
-	github.com/gin-contrib/cors v0.0.0-20170318125340-cf4846e6a636
-	github.com/gin-contrib/location v0.0.0-20170917021833-5220ebf8be6c
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7
 	github.com/gin-gonic/gin v0.0.0-20170702092826-d459835d2b07
 	github.com/golang/protobuf v0.0.0-20171021043952-1643683e1b54

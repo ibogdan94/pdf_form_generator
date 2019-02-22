@@ -142,7 +142,6 @@ func (p PdfParser) PngsToPdf(code string, pageElements PngToPdf) (result string,
 
 	resultFolder := p.ResultFolder + "/" + p.getCode()
 
-	//@todo if exist, need to remove
 	if _, err := os.Stat(resultFolder); !os.IsNotExist(err) {
 		if err := os.RemoveAll(resultFolder); err != nil {
 			return result, errors.New("cannot remove folder")
@@ -165,12 +164,10 @@ func (p PdfParser) PngsToPdf(code string, pageElements PngToPdf) (result string,
 		go func(index int, page PngPageWithElements, wg *sync.WaitGroup) {
 			resultPage, err := p.addPlaceholdersToPngImage(page, pageElements.Data)
 
+			//@todo need to handle here
 			if err != nil {
 				log.Printf("Error: %v\n", err)
-				//ctx.JSON(http.StatusInternalServerError, gin.H{
-				//	"message": "Something went wrong",
-				//})
-				//return
+				return
 			}
 
 			pngs[index] = resultPage
