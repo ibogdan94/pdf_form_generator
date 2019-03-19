@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  pdf_parser:
+    restart: always
+    build:
+      context: ./.
+    volumes:
+      - .:/go/src/pdf_form_generator
+    ports:
+      - 82:8080

@@ -1,10 +1,6 @@
-package utils
+package parser
 
-type ImageMagicPreparer interface {
-	Prepare()
-}
-
-type Object interface {
+type CanvasElementType interface {
 	getType() string
 }
 
@@ -95,21 +91,6 @@ type Text struct {
 
 func (t Text) getType() string {
 	return "text"
-}
-
-func (t *Text) Prepare() {
-	t.Top += 50
-	//font-zie must be converted from px to dpi
-	//we convert pdf to 300dpi solution for high quality printing
-	//ratio for 300dpi is 1 pixel/cm = 2.54 dpi
-	//t.FontSize = t.FontSize * 2.54
-	if t.Fill == "" {
-		t.Fill = "#000"
-	}
-
-	if t.BackgroundColor == "" {
-		t.BackgroundColor = "transparent"
-	}
 }
 
 type PngWithProps struct {
