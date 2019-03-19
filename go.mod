@@ -16,6 +16,7 @@ require (
 	golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e // indirect
 	golang.org/x/image v0.0.0-20171013013600-f7e31b4ea2e3
 	golang.org/x/net v0.0.0-20181017193950-04a2e542c03f // indirect
+	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
 	golang.org/x/sys v0.0.0-20180926160741-c2ed4eda69e7
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2

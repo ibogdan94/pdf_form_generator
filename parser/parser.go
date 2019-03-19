@@ -1,9 +1,11 @@
 package parser
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/unidoc/unidoc/pdf/creator"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io"
 	"log"
@@ -41,16 +43,14 @@ func (p PdfParser) PdfToPng(file multipart.File) (result []string, err error) {
 	folderToSave := p.StoreFolder + "/" + p.getCode()
 
 	if err := p.createFolder(folderToSave); err != nil {
-		log.Println("Cannot create result folder:", folderToSave, err)
-		return result, err
+		return result, errors.New(fmt.Sprintf("Cannot create result folder %s. Error: %s", folderToSave, err))
 	}
 
 	absolutePath := folderToSave + "/" + p.getCode() + ".pdf"
 	f, err := os.OpenFile(absolutePath, os.O_WRONLY|os.O_CREATE, 0755)
 
 	if err != nil {
-		log.Printf("Cannot Open File. Error: %s", err)
-		panic(err)
+		return result, errors.New(fmt.Sprintf("Cannot Open File. Error: %s", err))
 	}
 
 	defer f.Close()
@@ -59,30 +59,30 @@ func (p PdfParser) PdfToPng(file multipart.File) (result []string, err error) {
 	numberOfPages, err := GetNumberOfPages(absolutePath)
 
 	if err != nil {
-		log.Printf("Cannot get number of pages. Error: %s", err)
-		panic(err)
+		return result, errors.New(fmt.Sprintf("Cannot get number of pages. Error: %s", err))
 	}
 
 	if numberOfPages == 0 {
-		log.Printf("0 pages")
-		panic("0 pages")
+		return result, errors.New("pdf file has no pages")
 	}
 
-	wg := new(sync.WaitGroup)
+	g, _ := errgroup.WithContext(context.Background())
 
 	for i := 0; i < int(numberOfPages); i++ {
 		page := fmt.Sprintf("%s[%d]", absolutePath, i)
 		output := fmt.Sprintf("%s/%s[%d].png", folderToSave, p.getCode(), i)
 		//300dpi for printing
 		command := fmt.Sprintf("convert -resize 2480x3508 -verbose -trim -density %d -depth %d -flatten %s %s", 300, 8, page, output)
-
-		wg.Add(1)
 		result = append(result, output)
 
-		go p.converterCommand(command, wg)
+		g.Go(func() error {
+			return p.converterCommand(command)
+		})
 	}
 
-	wg.Wait()
+	if err := g.Wait(); err != nil {
+		return result, err
+	}
 
 	return
 }
@@ -101,18 +101,12 @@ func GetNumberOfPages(absolutePath string) (numberOfPages int, err error) {
 	return
 }
 
-func (p PdfParser) converterCommand(cmd string, wg *sync.WaitGroup) {
+func (p PdfParser) converterCommand(cmd string) (err error) {
 	parts := strings.Fields(cmd)
 	args := parts[1:]
-	out, err := exec.Command(parts[0], args...).Output()
+	_, err = exec.Command(parts[0], args...).Output()
 
-	if err != nil {
-		log.Printf("converterCommand error: %s", err)
-		panic(err)
-	}
-
-	log.Printf("converterCommand output: %s", out)
-	wg.Done()
+	return err
 }
 
 func (p PdfParser) createFolder(outputFolderPath string) (err error) {
@@ -155,28 +149,27 @@ func (p PdfParser) PngsToPdf(code string, pageElements PngToPdf) (result string,
 		}
 	}
 
-	wg := new(sync.WaitGroup)
-	wg.Add(numberOfPages)
-
 	pngs := make(map[int]string, numberOfPages)
 
+	g, _ := errgroup.WithContext(context.Background())
+
 	for index, page := range pageElements.Pages {
-		go func(index int, page PngPageWithElements, wg *sync.WaitGroup) {
+		g.Go(func() error {
 			resultPage, err := p.addPlaceholdersToPngImage(page, pageElements.Data)
 
-			//@todo need to handle here
 			if err != nil {
-				log.Printf("Error: %v\n", err)
-				return
+				return err
 			}
 
 			pngs[index] = resultPage
 
-			defer wg.Done()
-		}(index, page, wg)
+			return nil
+		})
 	}
 
-	wg.Wait()
+	if err := g.Wait(); err != nil {
+		return result, err
+	}
 
 	result, err = p.generatePdf(sortPages(pngs))
 
@@ -203,6 +196,7 @@ func (p PdfParser) addPlaceholdersToPngImage(pngPage PngPageWithElements, data [
 
 	usedTokens := make([]string, len(data))
 
+	//@todo need to normalize after the frontend will be updated
 	for _, object := range pngPage.CanvasElements.Objects {
 		go func(c chan<- []string, data []DataType, object Text) {
 			for _, dataType := range data {
@@ -270,8 +264,7 @@ func (p PdfParser) addPlaceholdersToPngImage(pngPage PngPageWithElements, data [
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		log.Printf(fmt.Sprint(err) + ": " + string(output))
-		return fileDestination, err
+		return fileDestination, errors.New(string(output))
 	}
 
 	return fileDestination, err
@@ -308,12 +301,9 @@ func (p PdfParser) generatePdf(pngsAbsolutePath []string) (pdfFile string, err e
 	c := creator.New()
 
 	for _, imgPath := range pngsAbsolutePath {
-		//fmt.Printf("Image: %s", imgPath)
-
 		img, err := creator.NewImageFromFile(imgPath)
 
 		if err != nil {
-			log.Printf("Error loading image: %v", err)
 			return pdfFile, err
 		}
 
@@ -326,7 +316,6 @@ func (p PdfParser) generatePdf(pngsAbsolutePath []string) (pdfFile string, err e
 		err = c.Draw(img)
 
 		if err != nil {
-			log.Printf("Error: %v", err)
 			return pdfFile, err
 		}
 	}
@@ -334,7 +323,6 @@ func (p PdfParser) generatePdf(pngsAbsolutePath []string) (pdfFile string, err e
 	pdfFile = p.ResultFolder + "/" + p.getCode() + "/" + p.getCode() + ".pdf"
 
 	if err := c.WriteToFile(pdfFile); err != nil {
-		log.Printf("WriteToFile: %v", err)
 		return pdfFile, err
 	}
 
