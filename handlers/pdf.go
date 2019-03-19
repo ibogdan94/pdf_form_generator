@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"pdf_form_generator/parser"
 	"strings"
@@ -14,21 +14,16 @@ type Handlers struct {
 }
 
 func (h Handlers) upload(ctx *gin.Context) {
-	file, headers, err := ctx.Request.FormFile("file")
+	file, headers, err := ctx.Request.FormFile("pdf")
 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "PDF file not found",
-		})
+	if hasErrorHandler(ctx, err, "PDF file not found", http.StatusBadRequest) {
 		return
 	}
 
 	mimeType := headers.Header.Get("Content-Type")
 
 	if mimeType != "application/pdf" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Only PDP file can be loaded",
-		})
+		hasErrorHandler(ctx, err, "Only PDP file can be loaded", http.StatusBadRequest)
 		return
 	}
 
@@ -36,10 +31,7 @@ func (h Handlers) upload(ctx *gin.Context) {
 
 	pages, err := h.pdfParser.PdfToPng(file)
 
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err,
-		})
+	if hasErrorHandler(ctx, err, fmt.Sprintf("Something went wrong. %s", err), http.StatusInternalServerError) {
 		return
 	}
 
@@ -60,20 +52,13 @@ func (h Handlers) show(ctx *gin.Context) {
 	var pageElements parser.PngToPdf
 
 	if err := ctx.BindJSON(&pageElements); err != nil {
-		log.Printf("Json error:%s\n", err)
-
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Cannot bind pdf params",
-		})
+		hasErrorHandler(ctx, err, "Cannot bind pdf params", http.StatusBadRequest)
 		return
 	}
 
 	result, err := h.pdfParser.PngsToPdf(storeFolderName, pageElements)
 
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err,
-		})
+	if hasErrorHandler(ctx, err, "Cannot find the pdf file", http.StatusBadRequest) {
 		return
 	}
 
